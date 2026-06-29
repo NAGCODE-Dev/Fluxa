@@ -1,0 +1,13 @@
+* text=auto
+
+*.dart text
+*.yaml text
+*.yml text
+*.json text
+*.md text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.svg text
