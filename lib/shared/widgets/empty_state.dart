@@ -1,4 +1,4 @@
-import 'package:financas/core/theme/spacing.dart';
+import 'package:fluxa/core/theme/spacing.dart';
 import 'package:flutter/material.dart';
 
 class EmptyState extends StatelessWidget {

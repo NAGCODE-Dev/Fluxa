@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/goal.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/goal.dart';
 
 class GoalRepository {
   const GoalRepository(this._localDatasource);

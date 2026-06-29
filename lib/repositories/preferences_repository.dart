@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/user_preferences.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/user_preferences.dart';
 
 class PreferencesRepository {
   const PreferencesRepository(this._localDatasource);

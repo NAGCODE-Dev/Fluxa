@@ -1,8 +1,8 @@
 import 'package:drift/native.dart';
-import 'package:financas/data/datasources/drift_local_datasource.dart';
-import 'package:financas/data/local/app_database.dart';
-import 'package:financas/models/account.dart';
-import 'package:financas/models/user_preferences.dart';
+import 'package:fluxa/data/datasources/drift_local_datasource.dart';
+import 'package:fluxa/data/local/app_database.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/user_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:financas/core/sync/remote_sync_target.dart';
-import 'package:financas/core/sync/sync_status.dart';
-import 'package:financas/data/local/app_database.dart';
-import 'package:financas/models/account.dart';
-import 'package:financas/models/budget.dart';
-import 'package:financas/models/calendar_event.dart';
-import 'package:financas/models/card.dart';
-import 'package:financas/models/goal.dart';
-import 'package:financas/models/subscription.dart';
-import 'package:financas/models/transaction.dart';
-import 'package:financas/models/user_preferences.dart';
+import 'package:fluxa/core/sync/remote_sync_target.dart';
+import 'package:fluxa/core/sync/sync_status.dart';
+import 'package:fluxa/data/local/app_database.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/card.dart';
+import 'package:fluxa/models/goal.dart';
+import 'package:fluxa/models/transaction.dart';
+import 'package:fluxa/models/user_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -51,6 +48,15 @@ class NoopSyncService implements SyncService {
 }
 
 class SupabaseSyncService implements SyncService {
+  static const _remoteSyncEntityTypes = {
+    'profiles',
+    'accounts',
+    'cards',
+    'categories',
+    'goals',
+    'transactions',
+  };
+
   SupabaseSyncService(
     this._database, [
     this._target,
@@ -111,32 +117,44 @@ class SupabaseSyncService implements SyncService {
       lastError: null,
     );
 
-    final items = await _database.getSyncQueueItems(
-      statuses: const ['pending', 'failed'],
-    );
+    try {
+      final items = await _database.getSyncQueueItems(
+        statuses: const ['pending', 'failed'],
+      );
 
-    for (final item in items) {
-      await _database.markSyncQueueProcessing(item.id, userId: userId);
-      try {
-        await _applyRemoteMutation(item, userId: userId);
-        await _database.markSyncQueueSynced(item.id, userId: userId);
-      } catch (error) {
-        await _database.markSyncQueueFailed(
-          item.id,
-          userId: userId,
-          retryCount: item.retryCount + 1,
-          lastError: error.toString(),
-        );
+      for (final item in items) {
+        await _database.markSyncQueueProcessing(item.id, userId: userId);
+        try {
+          if (!_remoteSyncEntityTypes.contains(item.localEntityType)) {
+            await _database.markSyncQueueSynced(item.id, userId: userId);
+            continue;
+          }
+          await _applyRemoteMutation(item, userId: userId);
+          await _database.markSyncQueueSynced(item.id, userId: userId);
+        } catch (error) {
+          await _database.markSyncQueueFailed(
+            item.id,
+            userId: userId,
+            retryCount: item.retryCount + 1,
+            lastError: _describeSyncError(error),
+          );
+        }
       }
-    }
 
-    await _database.clearSyncedQueueItems();
-    await _pullRemoteState(userId: userId);
-    await refreshStatus(isAuthenticated: true);
-    _status.value = _status.value.copyWith(
-      isSyncing: false,
-      lastSyncedAt: DateTime.now(),
-    );
+      await _database.clearSyncedQueueItems();
+      await _pullRemoteState(userId: userId);
+      await refreshStatus(isAuthenticated: true);
+      _status.value = _status.value.copyWith(
+        isSyncing: false,
+        lastSyncedAt: DateTime.now(),
+        lastError: null,
+      );
+    } catch (error) {
+      _status.value = _status.value.copyWith(
+        isSyncing: false,
+        lastError: _describeSyncError(error),
+      );
+    }
   }
 
   Future<void> _applyRemoteMutation(
@@ -284,11 +302,6 @@ class SupabaseSyncService implements SyncService {
         .select()
         .or('user_id.eq.$userId,user_id.is.null');
     final goalsResponse = await _client.from('goals').select().eq('user_id', userId);
-    final budgetsResponse = await _client.from('budgets').select().eq('user_id', userId);
-    final subscriptionsResponse =
-        await _client.from('subscriptions').select().eq('user_id', userId);
-    final calendarEventsResponse =
-        await _client.from('calendar_events').select().eq('user_id', userId);
     final transactionsResponse = await _client
         .from('transactions')
         .select()
@@ -361,52 +374,6 @@ class SupabaseSyncService implements SyncService {
         )
         .toList();
 
-    final budgets = (budgetsResponse as List<dynamic>)
-        .map(
-          (item) => Budget(
-            id: item['id'] as String,
-            category: item['category_id'] as String? ?? 'Outros',
-            periodMonth: item['period_month'] as int? ?? DateTime.now().month,
-            periodYear: item['period_year'] as int? ?? DateTime.now().year,
-            limitAmount: (item['budget_amount'] as num?)?.toDouble() ?? 0,
-            usedAmount: 0,
-            alertThresholdPercent:
-                (item['alert_threshold_percent'] as num?)?.toDouble() ?? 80,
-          ),
-        )
-        .toList();
-
-    final subscriptions = (subscriptionsResponse as List<dynamic>)
-        .map(
-          (item) => SubscriptionModel(
-            id: item['id'] as String,
-            name: item['name'] as String,
-            amount: (item['amount'] as num?)?.toDouble() ?? 0,
-            billingCycle: item['billing_cycle'] as String? ?? 'monthly',
-            nextChargeDate: DateTime.tryParse(
-                  item['next_charge_date'] as String? ?? '',
-                ) ??
-                DateTime.now(),
-            isActive: item['is_active'] as bool? ?? true,
-            detectionSource: item['detection_source'] as String? ?? 'manual',
-          ),
-        )
-        .toList();
-
-    final calendarEvents = (calendarEventsResponse as List<dynamic>)
-        .map(
-          (item) => CalendarEventModel(
-            id: item['id'] as String,
-            type: item['type'] as String? ?? 'custom',
-            title: item['title'] as String? ?? 'Evento',
-            description: item['description'] as String? ?? '',
-            eventDate: DateTime.tryParse(item['event_date'] as String? ?? '') ??
-                DateTime.now(),
-            amount: (item['amount'] as num?)?.toDouble(),
-          ),
-        )
-        .toList();
-
     final transactions = (transactionsResponse as List<dynamic>)
         .map(
           (item) => TransactionModel(
@@ -435,10 +402,17 @@ class SupabaseSyncService implements SyncService {
       cards: cards,
       categories: categories,
       goals: goals,
-      budgets: budgets,
-      subscriptions: subscriptions,
-      calendarEvents: calendarEvents,
+      budgets: const [],
+      subscriptions: const [],
+      calendarEvents: const [],
       transactions: transactions,
     );
+  }
+
+  String _describeSyncError(Object error) {
+    if (error is PostgrestException && error.code == 'PGRST205') {
+      return 'O schema remoto do Supabase ainda nao foi aplicado. Rode as migrations da pasta supabase/migrations no projeto.';
+    }
+    return error.toString();
   }
 }

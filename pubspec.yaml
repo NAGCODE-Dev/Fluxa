@@ -1,4 +1,4 @@
-name: financas
+name: fluxa
 description: Aplicativo mobile-first de gestao financeira pessoal com foco em velocidade e privacidade.
 publish_to: "none"
 version: 0.1.0+1
@@ -21,6 +21,38 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   drift_dev: ^2.34.1+1
   build_runner: ^2.15.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/brand/fluxa-app-icon-1024.png
+  remove_alpha_ios: true
+  adaptive_icon_background: "#2563EB"
+  adaptive_icon_foreground: assets/brand/fluxa-adaptive-foreground.png
+  web:
+    generate: true
+    image_path: assets/brand/fluxa-app-icon-1024.png
+    background_color: "#F8FAFC"
+    theme_color: "#2563EB"
+  windows:
+    generate: true
+    image_path: assets/brand/fluxa-app-icon-1024.png
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: assets/brand/fluxa-app-icon-1024.png
+
+flutter_native_splash:
+  color: "#F8FAFC"
+  image: assets/brand/fluxa-splash-icon.png
+  android_12:
+    color: "#F8FAFC"
+    image: assets/brand/fluxa-android12-splash-icon.png
+  web: false

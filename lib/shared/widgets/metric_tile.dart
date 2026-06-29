@@ -1,5 +1,5 @@
-import 'package:financas/models/dashboard_summary.dart';
-import 'package:financas/shared/widgets/app_card.dart';
+import 'package:fluxa/models/dashboard_summary.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
 import 'package:flutter/material.dart';
 
 class MetricTile extends StatelessWidget {
@@ -19,9 +19,19 @@ class MetricTile extends StatelessWidget {
         children: [
           Text(metric.label, style: textTheme.labelLarge),
           const SizedBox(height: 10),
-          Text(metric.valueLabel, style: textTheme.titleLarge),
+          Text(
+            metric.valueLabel,
+            style: textTheme.titleLarge,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 6),
-          Text(metric.caption, style: textTheme.bodyMedium),
+          Text(
+            metric.caption,
+            style: textTheme.bodyMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

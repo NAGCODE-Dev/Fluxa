@@ -1,27 +1,27 @@
 import 'dart:async';
 
-import 'package:financas/core/sync/sync_service.dart';
-import 'package:financas/core/sync/sync_status.dart';
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/features/add_expense/add_expense_sheet.dart';
-import 'package:financas/features/auth/email_auth_sheet.dart';
-import 'package:financas/features/cards/cards_page.dart';
-import 'package:financas/features/dashboard/dashboard_page.dart';
-import 'package:financas/features/history/history_page.dart';
-import 'package:financas/features/welcome/welcome_page.dart';
-import 'package:financas/models/user_preferences.dart';
-import 'package:financas/repositories/account_repository.dart';
-import 'package:financas/repositories/auth_repository.dart';
-import 'package:financas/repositories/budget_repository.dart';
-import 'package:financas/repositories/calendar_repository.dart';
-import 'package:financas/repositories/card_repository.dart';
-import 'package:financas/repositories/data_backup_repository.dart';
-import 'package:financas/repositories/dashboard_repository.dart';
-import 'package:financas/repositories/expense_repository.dart';
-import 'package:financas/repositories/goal_repository.dart';
-import 'package:financas/repositories/preferences_repository.dart';
-import 'package:financas/repositories/subscription_repository.dart';
-import 'package:financas/repositories/transaction_repository.dart';
+import 'package:fluxa/core/sync/sync_service.dart';
+import 'package:fluxa/core/sync/sync_status.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/features/add_expense/add_expense_sheet.dart';
+import 'package:fluxa/features/auth/email_auth_sheet.dart';
+import 'package:fluxa/features/cards/cards_page.dart';
+import 'package:fluxa/features/dashboard/dashboard_page.dart';
+import 'package:fluxa/features/history/history_page.dart';
+import 'package:fluxa/features/welcome/welcome_page.dart';
+import 'package:fluxa/models/user_preferences.dart';
+import 'package:fluxa/repositories/account_repository.dart';
+import 'package:fluxa/repositories/auth_repository.dart';
+import 'package:fluxa/repositories/budget_repository.dart';
+import 'package:fluxa/repositories/calendar_repository.dart';
+import 'package:fluxa/repositories/card_repository.dart';
+import 'package:fluxa/repositories/data_backup_repository.dart';
+import 'package:fluxa/repositories/dashboard_repository.dart';
+import 'package:fluxa/repositories/expense_repository.dart';
+import 'package:fluxa/repositories/goal_repository.dart';
+import 'package:fluxa/repositories/preferences_repository.dart';
+import 'package:fluxa/repositories/subscription_repository.dart';
+import 'package:fluxa/repositories/transaction_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -130,9 +130,12 @@ class _RootShellState extends State<RootShell> {
       DashboardPage(
         displayName: _preferences.displayName,
         summary: _dashboardRepository.getSummary(),
+        accounts: _accountRepository.listAccounts(),
+        cards: _cardRepository.listCards(),
       ),
       HistoryPage(
         transactions: _transactionRepository.listTransactions(),
+        subscriptions: _subscriptionRepository.listSubscriptions(),
         onSaveTransaction: (transaction) async {
           await _transactionRepository.saveTransaction(transaction);
           setState(() {});

@@ -1,27 +1,26 @@
-import 'package:financas/core/theme/radius.dart';
-import 'package:financas/core/sync/sync_status.dart';
-import 'package:financas/core/extensions/date_extension.dart';
-import 'package:financas/core/extensions/money_extension.dart';
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/features/auth/email_auth_sheet.dart';
-import 'package:financas/models/account.dart';
-import 'package:financas/models/budget.dart';
-import 'package:financas/models/calendar_event.dart';
-import 'package:financas/models/card.dart';
-import 'package:financas/models/goal.dart';
-import 'package:financas/models/subscription.dart';
-import 'package:financas/shared/widgets/app_bottom_sheet.dart';
-import 'package:financas/shared/widgets/app_button.dart';
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/app_input.dart';
-import 'package:financas/shared/widgets/bank_card_widget.dart';
-import 'package:financas/shared/widgets/empty_state.dart';
-import 'package:financas/shared/widgets/section_heading.dart';
+import 'package:fluxa/core/theme/radius.dart';
+import 'package:fluxa/core/sync/sync_status.dart';
+import 'package:fluxa/core/extensions/date_extension.dart';
+import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/features/auth/email_auth_sheet.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/budget.dart';
+import 'package:fluxa/models/calendar_event.dart';
+import 'package:fluxa/models/card.dart';
+import 'package:fluxa/models/goal.dart';
+import 'package:fluxa/models/subscription.dart';
+import 'package:fluxa/shared/widgets/app_bottom_sheet.dart';
+import 'package:fluxa/shared/widgets/app_button.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/app_input.dart';
+import 'package:fluxa/shared/widgets/bank_card_widget.dart';
+import 'package:fluxa/shared/widgets/empty_state.dart';
+import 'package:fluxa/shared/widgets/section_heading.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class CardsPage extends StatelessWidget {
+class CardsPage extends StatefulWidget {
   const CardsPage({
     super.key,
     required this.accounts,
@@ -86,198 +85,404 @@ class CardsPage extends StatelessWidget {
   final Future<void> Function() onSyncNow;
 
   @override
-  Widget build(BuildContext context) {
-    final primaryCard = cards.isEmpty ? null : cards.first;
-    final secondaryCards = cards.skip(1).toList();
+  State<CardsPage> createState() => _CardsPageState();
+}
 
+enum _PlanningSection {
+  budgets('Orçamento', Icons.pie_chart_outline_rounded),
+  goals('Metas', Icons.flag_outlined),
+  calendar('Calendário', Icons.event_note_rounded),
+  subscriptions('Assinaturas', Icons.repeat_rounded),
+  structure('Cartões', Icons.credit_card_rounded);
+
+  const _PlanningSection(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
+
+class _CardsPageState extends State<CardsPage> {
+  _PlanningSection _section = _PlanningSection.budgets;
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
       children: [
-        const SectionHeading(
-          eyebrow: 'Planejamento',
-          title: 'Próximos compromissos e espaço para decidir melhor',
-          description:
-              'Orçamento, recorrências, calendário e gestão financeira no mesmo lugar, sem perder simplicidade.',
+        Row(
+          children: [
+            const Expanded(
+              child: SectionHeading(
+                eyebrow: 'Planejamento',
+                title: 'Planejamento',
+              ),
+            ),
+            if (widget.currentSession == null)
+              IconButton(
+                tooltip: 'Entrar',
+                onPressed: _openAccountAccess,
+                icon: const Icon(Icons.person_outline_rounded),
+              )
+            else
+              PopupMenuButton<_AccountAction>(
+                tooltip: 'Conta',
+                onSelected: (action) async {
+                  if (action == _AccountAction.refresh) {
+                    await widget.onSyncNow();
+                    return;
+                  }
+                  await widget.onSignOut();
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _AccountAction.refresh,
+                    child: Text('Atualizar dados'),
+                  ),
+                  PopupMenuItem(
+                    value: _AccountAction.signOut,
+                    child: Text('Sair da conta'),
+                  ),
+                ],
+                icon: const Icon(Icons.person_rounded),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        _buildAccountCard(context),
+        const SizedBox(height: AppSpacing.lg - 2),
+        SizedBox(
+          height: 46,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (final section in _PlanningSection.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ChoiceChip(
+                    avatar: Icon(section.icon, size: 18),
+                    label: Text(section.label),
+                    selected: _section == section,
+                    onSelected: (_) {
+                      setState(() {
+                        _section = section;
+                      });
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Orçamento mensal',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final budget = await _BudgetFormSheet.show(context);
-                      if (budget == null) {
-                        return;
-                      }
-                      await onSaveBudget(budget);
-                    },
-                    child: const Text('Novo'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (budgets.isEmpty)
-                const EmptyState(
-                  title: 'Nenhum orçamento criado ainda',
-                  message: 'Defina um limite por categoria para acompanhar o mês com antecedência.',
-                )
-              else
-                ...budgets.map(
-                  (budget) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ManageRow(
-                      title:
-                          '${budget.category} • ${budget.usedAmount.toMoney()} / ${budget.limitAmount.toMoney()}',
-                      subtitle:
-                          'Restante ${budget.remainingAmount.toMoney()} • alerta ${(budget.alertThresholdPercent).toStringAsFixed(0)}%',
-                      onEdit: () async {
-                        final updated = await _BudgetFormSheet.show(
-                          context,
-                          initialBudget: budget,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await onSaveBudget(updated);
-                      },
-                      onDelete: () => onDeleteBudget(budget.id),
-                    ),
-                  ),
+        _buildActiveSection(context),
+      ],
+    );
+  }
+
+  Widget _buildAccountCard(BuildContext context) {
+    if (widget.currentSession == null) {
+      return AppCard(
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text('Entre na sua conta para carregar seus dados em outros aparelhos.'),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            AppButton(
+              label: 'Entrar',
+              onPressed: _openAccountAccess,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AppCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.currentSession!.user.email ?? 'Conta conectada',
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Seus dados ficam vinculados a esta conta.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onSignOut,
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveSection(BuildContext context) {
+    return switch (_section) {
+      _PlanningSection.budgets => _buildBudgetsSection(context),
+      _PlanningSection.goals => _buildGoalsSection(context),
+      _PlanningSection.calendar => _buildCalendarSection(context),
+      _PlanningSection.subscriptions => _buildSubscriptionsSection(context),
+      _PlanningSection.structure => _buildStructureSection(context),
+    };
+  }
+
+  Widget _buildBudgetsSection(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Orçamento mensal',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final budget = await _BudgetFormSheet.show(context);
+                  if (budget == null) {
+                    return;
+                  }
+                  await widget.onSaveBudget(budget);
+                },
+                child: const Text('Novo'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Assinaturas',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final subscription = await _SubscriptionFormSheet.show(context);
-                      if (subscription == null) {
-                        return;
-                      }
-                      await onSaveSubscription(subscription);
-                    },
-                    child: const Text('Nova'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (subscriptions.isEmpty)
-                const EmptyState(
-                  title: 'Nenhuma assinatura registrada',
-                  message: 'Cadastre recorrências para saber o custo mensal e a próxima cobrança.',
-                )
-              else
-                ...subscriptions.map(
-                  (subscription) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ManageRow(
-                      title:
-                          '${subscription.name} • ${subscription.amount.toMoney()}',
-                      subtitle:
-                          'Ciclo ${subscription.billingCycle} • próxima cobrança ${subscription.nextChargeDate.toShortPtBr()}',
-                      onEdit: () async {
-                        final updated = await _SubscriptionFormSheet.show(
-                          context,
-                          initialSubscription: subscription,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await onSaveSubscription(updated);
-                      },
-                      onDelete: () => onDeleteSubscription(subscription.id),
-                    ),
-                  ),
+          const SizedBox(height: 12),
+          if (widget.budgets.isEmpty)
+            const EmptyState(
+              title: 'Nenhum orçamento criado ainda',
+              message: 'Defina um limite por categoria para acompanhar o mês.',
+            )
+          else
+            ...widget.budgets.map(
+              (budget) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ManageRow(
+                  title:
+                      '${budget.category} • ${budget.usedAmount.toMoney()} / ${budget.limitAmount.toMoney()}',
+                  subtitle:
+                      'Restante ${budget.remainingAmount.toMoney()} • alerta ${(budget.alertThresholdPercent).toStringAsFixed(0)}%',
+                  onEdit: () async {
+                    final updated = await _BudgetFormSheet.show(
+                      context,
+                      initialBudget: budget,
+                    );
+                    if (updated == null) {
+                      return;
+                    }
+                    await widget.onSaveBudget(updated);
+                  },
+                  onDelete: () => widget.onDeleteBudget(budget.id),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalsSection(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Metas',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final goal = await _GoalFormSheet.show(context);
+                  if (goal == null) {
+                    return;
+                  }
+                  await widget.onSaveGoal(goal);
+                },
+                child: const Text('Nova'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Calendário financeiro',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final event = await _CalendarEventFormSheet.show(context);
-                      if (event == null) {
-                        return;
-                      }
-                      await onSaveCalendarEvent(event);
-                    },
-                    child: const Text('Novo'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (calendarEvents.isEmpty)
-                const EmptyState(
-                  title: 'Nenhum evento futuro salvo',
-                  message: 'Registre vencimentos e cobranças para visualizar o mês antes dele chegar.',
-                )
-              else
-                ...calendarEvents.map(
-                  (event) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ManageRow(
-                      title:
-                          '${event.title} • ${event.eventDate.toShortPtBr()}',
-                      subtitle: event.amount == null
-                          ? event.description
-                          : '${event.description} • ${event.amount!.toMoney()}',
-                      onEdit: () async {
-                        final updated = await _CalendarEventFormSheet.show(
-                          context,
-                          initialEvent: event,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await onSaveCalendarEvent(updated);
-                      },
-                      onDelete: () => onDeleteCalendarEvent(event.id),
-                    ),
-                  ),
+          const SizedBox(height: 12),
+          if (widget.goals.isEmpty)
+            const EmptyState(
+              title: 'Nenhuma meta salva ainda',
+              message: 'Crie metas para acompanhar reserva, viagem ou compra grande.',
+            )
+          else
+            ...widget.goals.map(
+              (goal) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ManageRow(
+                  title:
+                      '${goal.name} • ${goal.currentAmount.toMoney()} / ${goal.targetAmount.toMoney()}',
+                  subtitle:
+                      'Progresso ${(goal.progress * 100).toStringAsFixed(0)}% • prazo ${goal.estimatedLabel}',
+                  onEdit: () async {
+                    final updated = await _GoalFormSheet.show(
+                      context,
+                      initialGoal: goal,
+                    );
+                    if (updated == null) {
+                      return;
+                    }
+                    await widget.onSaveGoal(updated);
+                  },
+                  onDelete: () => widget.onDeleteGoal(goal.id),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarSection(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Calendário financeiro',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final event = await _CalendarEventFormSheet.show(context);
+                  if (event == null) {
+                    return;
+                  }
+                  await widget.onSaveCalendarEvent(event);
+                },
+                child: const Text('Novo'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg - 2),
+          const SizedBox(height: 12),
+          if (widget.calendarEvents.isEmpty)
+            const EmptyState(
+              title: 'Nenhum evento futuro salvo',
+              message: 'Registre vencimentos e cobranças para visualizar o mês.',
+            )
+          else
+            ...widget.calendarEvents.map(
+              (event) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ManageRow(
+                  title: '${event.title} • ${event.eventDate.toShortPtBr()}',
+                  subtitle: event.amount == null
+                      ? event.description
+                      : '${event.description} • ${event.amount!.toMoney()}',
+                  onEdit: () async {
+                    final updated = await _CalendarEventFormSheet.show(
+                      context,
+                      initialEvent: event,
+                    );
+                    if (updated == null) {
+                      return;
+                    }
+                    await widget.onSaveCalendarEvent(updated);
+                  },
+                  onDelete: () => widget.onDeleteCalendarEvent(event.id),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionsSection(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Assinaturas',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final subscription = await _SubscriptionFormSheet.show(context);
+                  if (subscription == null) {
+                    return;
+                  }
+                  await widget.onSaveSubscription(subscription);
+                },
+                child: const Text('Nova'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (widget.subscriptions.isEmpty)
+            const EmptyState(
+              title: 'Nenhuma assinatura registrada',
+              message: 'Cadastre recorrências para ver a próxima cobrança.',
+            )
+          else
+            ...widget.subscriptions.map(
+              (subscription) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ManageRow(
+                  title: '${subscription.name} • ${subscription.amount.toMoney()}',
+                  subtitle:
+                      'Ciclo ${subscription.billingCycle} • próxima cobrança ${subscription.nextChargeDate.toShortPtBr()}',
+                  onEdit: () async {
+                    final updated = await _SubscriptionFormSheet.show(
+                      context,
+                      initialSubscription: subscription,
+                    );
+                    if (updated == null) {
+                      return;
+                    }
+                    await widget.onSaveSubscription(updated);
+                  },
+                  onDelete: () => widget.onDeleteSubscription(subscription.id),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStructureSection(BuildContext context) {
+    final primaryCard = widget.cards.isEmpty ? null : widget.cards.first;
+    final secondaryCards = widget.cards.skip(1).toList();
+
+    return Column(
+      children: [
         Row(
           children: [
             Expanded(
@@ -288,7 +493,7 @@ class CardsPage extends StatelessWidget {
                   if (account == null) {
                     return;
                   }
-                  await onSaveAccount(account);
+                  await widget.onSaveAccount(account);
                 },
               ),
             ),
@@ -302,7 +507,7 @@ class CardsPage extends StatelessWidget {
                   if (card == null) {
                     return;
                   }
-                  await onSaveCard(card);
+                  await widget.onSaveCard(card);
                 },
               ),
             ),
@@ -322,10 +527,7 @@ class CardsPage extends StatelessWidget {
                         right: card == secondaryCards.first ? 8 : 0,
                         left: card == secondaryCards.last ? 8 : 0,
                       ),
-                      child: BankCardWidget(
-                        card: card,
-                        compact: true,
-                      ),
+                      child: BankCardWidget(card: card, compact: true),
                     ),
                   ),
               ],
@@ -337,19 +539,19 @@ class CardsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cartões cadastrados',
+                'Cartões',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 12),
-              if (cards.isEmpty)
+              if (widget.cards.isEmpty)
                 const EmptyState(
                   title: 'Nenhum cartão salvo ainda',
-                  message: 'Adicione um cartão visual para acompanhar limite e fatura sem expor dados reais.',
+                  message: 'Adicione um cartão para acompanhar limite e fatura.',
                 )
               else
-                ...cards.map(
+                ...widget.cards.map(
                   (card) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _ManageRow(
@@ -364,9 +566,9 @@ class CardsPage extends StatelessWidget {
                         if (updated == null) {
                           return;
                         }
-                        await onSaveCard(updated);
+                        await widget.onSaveCard(updated);
                       },
-                      onDelete: () => onDeleteCard(card.id),
+                      onDelete: () => widget.onDeleteCard(card.id),
                     ),
                   ),
                 ),
@@ -379,19 +581,19 @@ class CardsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Contas cadastradas',
+                'Contas',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 12),
-              if (accounts.isEmpty)
+              if (widget.accounts.isEmpty)
                 const EmptyState(
                   title: 'Nenhuma conta salva ainda',
-                  message: 'Cadastre uma conta para refletir saldo e origem dos gastos locais.',
+                  message: 'Cadastre uma conta para refletir saldo e origem dos gastos.',
                 )
               else
-                ...accounts.map(
+                ...widget.accounts.map(
                   (account) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _ManageRow(
@@ -405,9 +607,9 @@ class CardsPage extends StatelessWidget {
                         if (updated == null) {
                           return;
                         }
-                        await onSaveAccount(updated);
+                        await widget.onSaveAccount(updated);
                       },
-                      onDelete: () => onDeleteAccount(account.id),
+                      onDelete: () => widget.onDeleteAccount(account.id),
                     ),
                   ),
                 ),
@@ -421,13 +623,8 @@ class CardsPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Categorias',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
+                  const Expanded(
+                    child: Text('Categorias'),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -435,7 +632,7 @@ class CardsPage extends StatelessWidget {
                       if (category == null) {
                         return;
                       }
-                      await onSaveCategory(category);
+                      await widget.onSaveCategory(category);
                     },
                     child: const Text('Nova'),
                   ),
@@ -445,11 +642,11 @@ class CardsPage extends StatelessWidget {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: categories
+                children: widget.categories
                     .map(
                       (category) => InputChip(
                         label: Text(category),
-                        onDeleted: () => onDeleteCategory(category),
+                        onDeleted: () => widget.onDeleteCategory(category),
                       ),
                     )
                     .toList(),
@@ -457,229 +654,61 @@ class CardsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Metas',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final goal = await _GoalFormSheet.show(context);
-                      if (goal == null) {
-                        return;
-                      }
-                      await onSaveGoal(goal);
-                    },
-                    child: const Text('Nova'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (goals.isEmpty)
-                Text(
-                  'Nenhuma meta salva ainda.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                )
-              else
-                ...goals.map(
-                  (goal) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ManageRow(
-                      title: '${goal.name} • ${goal.currentAmount.toMoney()} / ${goal.targetAmount.toMoney()}',
-                      subtitle:
-                          'Progresso ${(goal.progress * 100).toStringAsFixed(0)}% • prazo ${goal.estimatedLabel}',
-                      onEdit: () async {
-                        final updated = await _GoalFormSheet.show(
-                          context,
-                          initialGoal: goal,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await onSaveGoal(updated);
-                      },
-                      onDelete: () => onDeleteGoal(goal.id),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Sincronização',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                currentSession == null
-                    ? 'Seu arquivo está apenas neste aparelho. Entre para sincronizar entre dispositivos.'
-                    : 'Sincronização ativa para ${currentSession!.user.email ?? 'conta conectada'}.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                syncStatus.isSyncing
-                    ? 'Sincronizando agora...'
-                    : 'Pendentes: ${syncStatus.pendingCount} • Falhas: ${syncStatus.failedCount}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (syncStatus.lastError != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  syncStatus.lastError!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg - 2),
-              if (currentSession == null)
-                Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        label: 'Entrar com Google',
-                        onPressed: onSignInWithGoogle,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm + 2),
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        label: 'Entrar com e-mail',
-                        variant: AppButtonVariant.secondary,
-                        onPressed: () async {
-                          final result = await EmailAuthSheet.show(context);
-                          if (result == null) {
-                            return;
-                          }
-                          await onEmailAuthRequested(result);
-                        },
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        label: syncStatus.isSyncing
-                            ? 'Sincronizando...'
-                            : 'Sincronizar agora',
-                        onPressed: syncStatus.isSyncing ? null : onSyncNow,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm + 2),
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        label: 'Sair desta conta',
-                        variant: AppButtonVariant.secondary,
-                        onPressed: onSignOut,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Backup local',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Exporte um snapshot JSON do app ou restaure um backup colado manualmente.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: AppSpacing.lg - 2),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: 'Exportar',
-                      onPressed: () async {
-                        final rawData = await onExportData();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        await _BackupExportSheet.show(
-                          context,
-                          rawData: rawData,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: AppButton(
-                      label: 'Importar',
-                      variant: AppButtonVariant.secondary,
-                      onPressed: () async {
-                        final rawData = await _BackupImportSheet.show(context);
-                        if (rawData == null || rawData.trim().isEmpty) {
-                          return;
-                        }
-
-                        try {
-                          await onImportData(rawData);
-                        } on FormatException catch (error) {
-                          if (!context.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(error.message)),
-                          );
-                          return;
-                        }
-
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Backup importado com sucesso.'),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
+
+  Future<void> _openAccountAccess() async {
+    final action = await showModalBottomSheet<_SignInAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.account_circle_outlined),
+                title: const Text('Entrar com Google'),
+                onTap: () => Navigator.of(context).pop(_SignInAction.google),
+              ),
+              ListTile(
+                leading: const Icon(Icons.alternate_email_rounded),
+                title: const Text('Entrar com e-mail'),
+                onTap: () => Navigator.of(context).pop(_SignInAction.email),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (action == null) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+
+    if (action == _SignInAction.google) {
+      await widget.onSignInWithGoogle();
+      return;
+    }
+
+    final result = await EmailAuthSheet.show(context);
+    if (!mounted) {
+      return;
+    }
+    if (result == null) {
+      return;
+    }
+    await widget.onEmailAuthRequested(result);
+  }
 }
+
+enum _AccountAction { refresh, signOut }
+enum _SignInAction { google, email }
 
 class _ManageRow extends StatelessWidget {
   const _ManageRow({
@@ -1512,161 +1541,6 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
         description: _descriptionController.text.trim(),
         eventDate: eventDate,
         amount: amount,
-      ),
-    );
-  }
-}
-
-class _BackupExportSheet extends StatelessWidget {
-  const _BackupExportSheet({
-    required this.rawData,
-  });
-
-  final String rawData;
-
-  static Future<void> show(
-    BuildContext context, {
-    required String rawData,
-  }) {
-    return AppBottomSheet.show<void>(
-      context: context,
-      child: _BackupExportSheet(rawData: rawData),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        12,
-        12,
-        12,
-        MediaQuery.of(context).viewInsets.bottom + 12,
-      ),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Exportar backup',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Copie este JSON e guarde onde preferir. Nenhum dado sensível do cartão é incluído.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppInput(
-              controller: TextEditingController(text: rawData),
-              label: 'Snapshot',
-              readOnly: true,
-              maxLines: 10,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                label: 'Copiar backup',
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: rawData));
-                  if (!context.mounted) {
-                    return;
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Backup copiado.')),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BackupImportSheet extends StatefulWidget {
-  const _BackupImportSheet();
-
-  static Future<String?> show(BuildContext context) {
-    return AppBottomSheet.show<String>(
-      context: context,
-      child: const _BackupImportSheet(),
-    );
-  }
-
-  @override
-  State<_BackupImportSheet> createState() => _BackupImportSheetState();
-}
-
-class _BackupImportSheetState extends State<_BackupImportSheet> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        12,
-        12,
-        12,
-        MediaQuery.of(context).viewInsets.bottom + 12,
-      ),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Importar backup',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Cole um backup JSON exportado pelo app. A restauração substitui os dados locais atuais.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppInput(
-              controller: _controller,
-              label: 'Backup JSON',
-              hint: '{ "version": 1, ... }',
-              maxLines: 10,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                label: 'Restaurar dados',
-                onPressed: () {
-                  final rawData = _controller.text.trim();
-                  if (rawData.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Cole um backup válido.')),
-                    );
-                    return;
-                  }
-                  Navigator.of(context).pop(rawData);
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

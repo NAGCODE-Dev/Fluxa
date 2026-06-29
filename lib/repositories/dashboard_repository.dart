@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/dashboard_summary.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/dashboard_summary.dart';
 
 class DashboardRepository {
   const DashboardRepository(this._localDatasource);

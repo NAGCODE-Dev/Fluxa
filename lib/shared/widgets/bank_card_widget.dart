@@ -1,7 +1,7 @@
-import 'package:financas/core/extensions/money_extension.dart';
-import 'package:financas/core/theme/radius.dart';
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/models/card.dart';
+import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/theme/radius.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/models/card.dart';
 import 'package:flutter/material.dart';
 
 class BankCardWidget extends StatelessWidget {

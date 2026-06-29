@@ -1,4 +1,4 @@
-import 'package:financas/models/budget.dart';
+import 'package:fluxa/models/budget.dart';
 
 final fakeBudgets = [
   const Budget(

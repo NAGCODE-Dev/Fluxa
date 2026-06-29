@@ -1,11 +1,13 @@
-import 'package:financas/core/extensions/money_extension.dart';
-import 'package:financas/core/extensions/string_extension.dart';
-import 'package:financas/core/theme/colors.dart';
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/models/dashboard_summary.dart';
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/metric_tile.dart';
-import 'package:financas/shared/widgets/section_heading.dart';
+import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/extensions/string_extension.dart';
+import 'package:fluxa/core/theme/colors.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/card.dart';
+import 'package:fluxa/models/dashboard_summary.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/metric_tile.dart';
+import 'package:fluxa/shared/widgets/section_heading.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -13,10 +15,14 @@ class DashboardPage extends StatelessWidget {
     super.key,
     required this.displayName,
     required this.summary,
+    required this.accounts,
+    required this.cards,
   });
 
   final String displayName;
   final DashboardSummary summary;
+  final List<Account> accounts;
+  final List<PaymentCard> cards;
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +35,6 @@ class DashboardPage extends StatelessWidget {
         SectionHeading(
           eyebrow: 'Início',
           title: 'Olá, $name',
-          description:
-              'Uma visão rápida do que importa agora, sem exigir rolagem crítica ou leitura excessiva.',
         ),
         const SizedBox(height: AppSpacing.xl),
         AppCard(
@@ -70,7 +74,7 @@ class DashboardPage extends StatelessWidget {
                 crossAxisCount: columns,
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
-                mainAxisExtent: 134,
+                mainAxisExtent: 152,
               ),
               itemCount: summary.metrics.length,
               itemBuilder: (context, index) {
@@ -78,6 +82,36 @@ class DashboardPage extends StatelessWidget {
               },
             );
           },
+        ),
+        const SizedBox(height: AppSpacing.lg - 2),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Estrutura financeira',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              _QuickStatRow(
+                label: 'Contas',
+                value: '${accounts.length} ativa${accounts.length == 1 ? '' : 's'}',
+                caption: accounts.isEmpty
+                    ? 'Cadastre uma conta para registrar gastos no fluxo local.'
+                    : 'Saldo combinado ${accounts.fold<double>(0, (sum, account) => sum + account.balance).toMoney()}',
+              ),
+              const SizedBox(height: 12),
+              _QuickStatRow(
+                label: 'Cartões',
+                value: '${cards.length} cadastrado${cards.length == 1 ? '' : 's'}',
+                caption: cards.isEmpty
+                    ? 'Nenhum cartão salvo ainda.'
+                    : 'Fatura atual ${summary.totalCurrentInvoice.toMoney()}',
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.lg - 2),
         AppCard(
@@ -106,6 +140,32 @@ class DashboardPage extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _QuickStatRow extends StatelessWidget {
+  const _QuickStatRow({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  final String label;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        Text(value, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 2),
+        Text(caption, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

@@ -1,29 +1,38 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart' hide Column;
-import 'package:financas/core/sync/remote_sync_target.dart';
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/data/fake/fake_accounts.dart';
-import 'package:financas/data/fake/fake_budgets.dart';
-import 'package:financas/data/fake/fake_calendar_events.dart';
-import 'package:financas/data/fake/fake_cards.dart';
-import 'package:financas/data/fake/fake_goals.dart';
-import 'package:financas/data/fake/fake_subscriptions.dart';
-import 'package:financas/data/fake/fake_transactions.dart';
-import 'package:financas/data/local/app_database.dart';
-import 'package:financas/models/account.dart';
-import 'package:financas/models/budget.dart';
-import 'package:financas/models/calendar_event.dart';
-import 'package:financas/models/card.dart';
-import 'package:financas/models/dashboard_summary.dart';
-import 'package:financas/models/expense_draft.dart';
-import 'package:financas/models/goal.dart';
-import 'package:financas/models/subscription.dart';
-import 'package:financas/models/transaction.dart';
-import 'package:financas/models/user_preferences.dart';
+import 'package:fluxa/core/sync/remote_sync_target.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/data/fake/fake_accounts.dart';
+import 'package:fluxa/data/fake/fake_budgets.dart';
+import 'package:fluxa/data/fake/fake_calendar_events.dart';
+import 'package:fluxa/data/fake/fake_cards.dart';
+import 'package:fluxa/data/fake/fake_goals.dart';
+import 'package:fluxa/data/fake/fake_subscriptions.dart';
+import 'package:fluxa/data/fake/fake_transactions.dart';
+import 'package:fluxa/data/local/app_database.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/budget.dart';
+import 'package:fluxa/models/calendar_event.dart';
+import 'package:fluxa/models/card.dart';
+import 'package:fluxa/models/dashboard_summary.dart';
+import 'package:fluxa/models/expense_draft.dart';
+import 'package:fluxa/models/goal.dart';
+import 'package:fluxa/models/subscription.dart';
+import 'package:fluxa/models/transaction.dart';
+import 'package:fluxa/models/user_preferences.dart';
 
 class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
   DriftLocalDatasource(this._database);
+
+  static const _remoteSyncEntityTypes = {
+    'profiles',
+    'accounts',
+    'cards',
+    'categories',
+    'goals',
+    'transactions',
+  };
 
   static const _defaultCategories = [
     'Mercado',
@@ -247,7 +256,7 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
   ExpenseDraft getExpenseDraft() {
     final sources = getExpenseSources();
     return const ExpenseDraft(
-      amount: 120,
+      amount: 0,
       category: 'Mercado',
       source: '',
       description: '',
@@ -442,7 +451,6 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
 
   @override
   Future<void> saveBudget(Budget budget) async {
-    final isUpdate = _budgets.any((item) => item.id == budget.id);
     final index = _budgets.indexWhere((item) => item.id == budget.id);
     if (index >= 0) {
       _budgets[index] = budget;
@@ -450,27 +458,16 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
       _budgets.add(budget);
     }
     await _writeBudgets(_budgets);
-    await _enqueueUpsert(
-      entityType: 'budgets',
-      localEntityId: budget.id,
-      operation: isUpdate ? 'update' : 'create',
-      payload: budget.toJson(),
-    );
   }
 
   @override
   Future<void> deleteBudget(String budgetId) async {
     _budgets = _budgets.where((budget) => budget.id != budgetId).toList();
     await _writeBudgets(_budgets);
-    await _enqueueDelete(
-      entityType: 'budgets',
-      localEntityId: budgetId,
-    );
   }
 
   @override
   Future<void> saveSubscription(SubscriptionModel subscription) async {
-    final isUpdate = _subscriptions.any((item) => item.id == subscription.id);
     final index =
         _subscriptions.indexWhere((item) => item.id == subscription.id);
     if (index >= 0) {
@@ -479,12 +476,6 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
       _subscriptions.add(subscription);
     }
     await _writeSubscriptions(_subscriptions);
-    await _enqueueUpsert(
-      entityType: 'subscriptions',
-      localEntityId: subscription.id,
-      operation: isUpdate ? 'update' : 'create',
-      payload: subscription.toJson(),
-    );
   }
 
   @override
@@ -493,15 +484,10 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
         .where((subscription) => subscription.id != subscriptionId)
         .toList();
     await _writeSubscriptions(_subscriptions);
-    await _enqueueDelete(
-      entityType: 'subscriptions',
-      localEntityId: subscriptionId,
-    );
   }
 
   @override
   Future<void> saveCalendarEvent(CalendarEventModel event) async {
-    final isUpdate = _calendarEvents.any((item) => item.id == event.id);
     final index = _calendarEvents.indexWhere((item) => item.id == event.id);
     if (index >= 0) {
       _calendarEvents[index] = event;
@@ -509,12 +495,6 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
       _calendarEvents.add(event);
     }
     await _writeCalendarEvents(_calendarEvents);
-    await _enqueueUpsert(
-      entityType: 'calendar_events',
-      localEntityId: event.id,
-      operation: isUpdate ? 'update' : 'create',
-      payload: event.toJson(),
-    );
   }
 
   @override
@@ -522,10 +502,6 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
     _calendarEvents =
         _calendarEvents.where((event) => event.id != eventId).toList();
     await _writeCalendarEvents(_calendarEvents);
-    await _enqueueDelete(
-      entityType: 'calendar_events',
-      localEntityId: eventId,
-    );
   }
 
   @override
@@ -905,6 +881,9 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
     required String entityType,
     required String localEntityId,
   }) {
+    if (!_remoteSyncEntityTypes.contains(entityType)) {
+      return Future.value();
+    }
     return _database.enqueueSyncMutation(
       localEntityType: entityType,
       localEntityId: localEntityId,
@@ -947,30 +926,6 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
         payload: goal.toJson(),
       );
     }
-    for (final budget in _budgets) {
-      await _enqueueUpsert(
-        entityType: 'budgets',
-        localEntityId: budget.id,
-        operation: 'update',
-        payload: budget.toJson(),
-      );
-    }
-    for (final subscription in _subscriptions) {
-      await _enqueueUpsert(
-        entityType: 'subscriptions',
-        localEntityId: subscription.id,
-        operation: 'update',
-        payload: subscription.toJson(),
-      );
-    }
-    for (final event in _calendarEvents) {
-      await _enqueueUpsert(
-        entityType: 'calendar_events',
-        localEntityId: event.id,
-        operation: 'update',
-        payload: event.toJson(),
-      );
-    }
     for (final transaction in _transactions) {
       await _enqueueUpsert(
         entityType: 'transactions',
@@ -997,6 +952,9 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
     required String operation,
     required Map<String, dynamic> payload,
   }) {
+    if (!_remoteSyncEntityTypes.contains(entityType)) {
+      return Future.value();
+    }
     return _database.enqueueSyncMutation(
       localEntityType: entityType,
       localEntityId: localEntityId,

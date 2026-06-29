@@ -1,4 +1,4 @@
-import 'package:financas/models/account.dart';
+import 'package:fluxa/models/account.dart';
 
 const fakeAccounts = [
   Account(

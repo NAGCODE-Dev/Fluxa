@@ -1,4 +1,4 @@
-# Finanças
+# Fluxa
 
 Vertical slice Flutter do produto definido em `Docs/`.
 
@@ -41,6 +41,13 @@ Quando o Flutter SDK estiver instalado:
 flutter pub get
 flutter run
 ```
+
+## Marca
+- Símbolo oficial da marca: `assets/brand/source/fluxa-symbol-master.svg`
+- Prancha oficial da marca: `assets/brand/source/fluxa-board-master.svg`
+- Exports prontos para uso: `assets/brand/fluxa-symbol-1024.png`, `assets/brand/fluxa-lockup-dark.png` e `assets/brand/fluxa-brand-board.png`
+- `assets/brand/source` deve conter apenas os masters oficiais editáveis
+- Para regenerar branding, ícone e splash: `source .venv-brand/bin/activate && python tool/generate_brand_assets.py`
 
 ## Limitação deste ambiente
 O SDK `flutter` não está instalado na máquina atual, então o código foi estruturado mas não pôde ser compilado ou testado localmente daqui.

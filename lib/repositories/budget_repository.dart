@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/budget.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/budget.dart';
 
 class BudgetRepository {
   const BudgetRepository(this._localDatasource);

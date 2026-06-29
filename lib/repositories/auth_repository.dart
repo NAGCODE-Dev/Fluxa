@@ -1,4 +1,4 @@
-import 'package:financas/core/config/supabase_config.dart';
+import 'package:fluxa/core/config/supabase_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository {

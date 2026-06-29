@@ -1,5 +1,5 @@
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/money_text.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/money_text.dart';
 import 'package:flutter/material.dart';
 
 class TransactionRow extends StatelessWidget {

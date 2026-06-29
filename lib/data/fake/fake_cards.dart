@@ -1,4 +1,4 @@
-import 'package:financas/models/card.dart';
+import 'package:fluxa/models/card.dart';
 
 const fakeCards = [
   PaymentCard(

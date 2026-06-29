@@ -1,8 +1,8 @@
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/shared/widgets/app_bottom_sheet.dart';
-import 'package:financas/shared/widgets/app_button.dart';
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/app_input.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/shared/widgets/app_bottom_sheet.dart';
+import 'package:fluxa/shared/widgets/app_button.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/app_input.dart';
 import 'package:flutter/material.dart';
 
 enum EmailAuthMode { signIn, signUp }

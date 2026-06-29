@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/subscription.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/subscription.dart';
 
 class SubscriptionRepository {
   const SubscriptionRepository(this._localDatasource);

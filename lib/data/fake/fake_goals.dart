@@ -1,4 +1,4 @@
-import 'package:financas/models/goal.dart';
+import 'package:fluxa/models/goal.dart';
 
 const fakeGoals = [
   Goal(

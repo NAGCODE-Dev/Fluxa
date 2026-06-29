@@ -1,4 +1,4 @@
-package com.example.financas
+package com.nagcode.fluxa
 
 import io.flutter.embedding.android.FlutterActivity
 

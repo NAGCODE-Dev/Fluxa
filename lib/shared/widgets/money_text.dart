@@ -1,5 +1,5 @@
-import 'package:financas/core/extensions/money_extension.dart';
-import 'package:financas/core/theme/colors.dart';
+import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 class MoneyText extends StatelessWidget {

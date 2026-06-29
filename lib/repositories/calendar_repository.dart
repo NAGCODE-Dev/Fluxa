@@ -1,5 +1,5 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/calendar_event.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/calendar_event.dart';
 
 class CalendarRepository {
   const CalendarRepository(this._localDatasource);

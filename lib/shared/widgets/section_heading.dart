@@ -1,4 +1,4 @@
-import 'package:financas/core/theme/colors.dart';
+import 'package:fluxa/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 class SectionHeading extends StatelessWidget {

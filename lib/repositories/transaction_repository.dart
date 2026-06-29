@@ -1,6 +1,6 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/models/expense_draft.dart';
-import 'package:financas/models/transaction.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/models/expense_draft.dart';
+import 'package:fluxa/models/transaction.dart';
 
 class TransactionRepository {
   const TransactionRepository(this._localDatasource);

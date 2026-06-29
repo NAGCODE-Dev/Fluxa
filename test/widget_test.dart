@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:financas/app/app.dart';
-import 'package:financas/data/datasources/fake_local_datasource.dart';
+import 'package:fluxa/app/app.dart';
+import 'package:fluxa/data/datasources/fake_local_datasource.dart';
 
 void main() {
   testWidgets('carrega a shell inicial do app', (tester) async {
     await tester.pumpWidget(
-      FinancasApp(datasource: FakeLocalDatasource()),
+      FluxaApp(datasource: FakeLocalDatasource()),
     );
     await tester.pumpAndSettle();
 

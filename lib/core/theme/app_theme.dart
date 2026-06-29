@@ -1,6 +1,6 @@
-import 'package:financas/core/theme/colors.dart';
-import 'package:financas/core/theme/radius.dart';
-import 'package:financas/core/theme/typography.dart';
+import 'package:fluxa/core/theme/colors.dart';
+import 'package:fluxa/core/theme/radius.dart';
+import 'package:fluxa/core/theme/typography.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -78,7 +78,9 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
           minimumSize: const Size.fromHeight(56),
+          side: const BorderSide(color: AppColors.border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
@@ -165,7 +167,9 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(56),
+          side: const BorderSide(color: AppColors.darkBorder),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),

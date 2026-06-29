@@ -1,3 +1,5 @@
+import 'package:fluxa/core/theme/brand.dart';
+
 class SupabaseConfig {
   static const url = String.fromEnvironment(
     'SUPABASE_URL',
@@ -11,7 +13,7 @@ class SupabaseConfig {
 
   static const redirectScheme = String.fromEnvironment(
     'SUPABASE_REDIRECT_SCHEME',
-    defaultValue: 'financas',
+    defaultValue: AppBrand.uriScheme,
   );
 
   static const redirectHost = String.fromEnvironment(

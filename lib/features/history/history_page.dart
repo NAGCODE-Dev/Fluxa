@@ -1,24 +1,28 @@
-import 'package:financas/core/extensions/date_extension.dart';
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/models/transaction.dart';
-import 'package:financas/shared/widgets/app_bottom_sheet.dart';
-import 'package:financas/shared/widgets/app_button.dart';
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/app_input.dart';
-import 'package:financas/shared/widgets/empty_state.dart';
-import 'package:financas/shared/widgets/section_heading.dart';
-import 'package:financas/shared/widgets/transaction_row.dart';
+import 'package:fluxa/core/extensions/date_extension.dart';
+import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/models/subscription.dart';
+import 'package:fluxa/models/transaction.dart';
+import 'package:fluxa/shared/widgets/app_bottom_sheet.dart';
+import 'package:fluxa/shared/widgets/app_button.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/app_input.dart';
+import 'package:fluxa/shared/widgets/empty_state.dart';
+import 'package:fluxa/shared/widgets/section_heading.dart';
+import 'package:fluxa/shared/widgets/transaction_row.dart';
 import 'package:flutter/material.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({
     super.key,
     required this.transactions,
+    required this.subscriptions,
     required this.onSaveTransaction,
     required this.onDeleteTransaction,
   });
 
   final List<TransactionModel> transactions;
+  final List<SubscriptionModel> subscriptions;
   final Future<void> Function(TransactionModel transaction) onSaveTransaction;
   final Future<void> Function(String transactionId) onDeleteTransaction;
 
@@ -28,6 +32,9 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   late final TextEditingController _searchController;
+  bool _filterCurrentMonth = false;
+  bool _filterCards = false;
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -48,14 +55,22 @@ class _HistoryPageState extends State<HistoryPage> {
     final query = _searchController.text.trim().toLowerCase();
     final filteredTransactions = widget.transactions.where((item) {
       if (query.isEmpty) {
-        return true;
+        return _matchesQuickFilters(item);
       }
 
-      return item.title.toLowerCase().contains(query) ||
+      final matchesSearch = item.title.toLowerCase().contains(query) ||
           item.description.toLowerCase().contains(query) ||
           item.category.toLowerCase().contains(query) ||
           item.sourceLabel.toLowerCase().contains(query);
+      return matchesSearch && _matchesQuickFilters(item);
     }).toList();
+    final upcomingSubscriptions = [...widget.subscriptions]
+      ..sort((left, right) => left.nextChargeDate.compareTo(right.nextChargeDate));
+    final categories = widget.transactions
+        .map((item) => item.category)
+        .toSet()
+        .toList()
+      ..sort();
 
     if (widget.transactions.isEmpty) {
       return const EmptyState(
@@ -69,24 +84,82 @@ class _HistoryPageState extends State<HistoryPage> {
       children: [
         const SectionHeading(
           eyebrow: 'Histórico',
-          title: 'Para onde seu dinheiro foi',
-          description:
-              'Busca, filtros rápidos e leitura direta da movimentação sem ruído visual.',
+          title: 'Histórico',
         ),
         const SizedBox(height: AppSpacing.xl),
+        if (upcomingSubscriptions.isNotEmpty) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recorrências próximas',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                ...upcomingSubscriptions.take(3).map(
+                  (subscription) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${subscription.name} • ${subscription.amount.toMoney()}',
+                          ),
+                        ),
+                        Text(
+                          subscription.nextChargeDate.toShortPtBr(),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg - 2),
+        ],
         AppInput(
           controller: _searchController,
           hint: 'Buscar mercado, uber, salário...',
           prefixIcon: const Icon(Icons.search_rounded),
         ),
         const SizedBox(height: AppSpacing.lg - 2),
-        const Wrap(
+        Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            Chip(label: Text('Mês atual')),
-            Chip(label: Text('Cartões')),
-            Chip(label: Text('Mercado')),
+            FilterChip(
+              label: const Text('Mês atual'),
+              selected: _filterCurrentMonth,
+              onSelected: (value) {
+                setState(() {
+                  _filterCurrentMonth = value;
+                });
+              },
+            ),
+            FilterChip(
+              label: const Text('Cartões'),
+              selected: _filterCards,
+              onSelected: (value) {
+                setState(() {
+                  _filterCards = value;
+                });
+              },
+            ),
+            for (final category in categories.take(5))
+              FilterChip(
+                label: Text(category),
+                selected: _selectedCategory == category,
+                onSelected: (value) {
+                  setState(() {
+                    _selectedCategory = value ? category : null;
+                  });
+                },
+              ),
           ],
         ),
         const SizedBox(height: 18),
@@ -164,6 +237,34 @@ class _HistoryPageState extends State<HistoryPage> {
 
   void _refresh() {
     setState(() {});
+  }
+
+  bool _matchesQuickFilters(TransactionModel item) {
+    if (_filterCurrentMonth) {
+      final now = DateTime.now();
+      final sameMonth =
+          item.occuredAt.month == now.month && item.occuredAt.year == now.year;
+      if (!sameMonth) {
+        return false;
+      }
+    }
+
+    if (_filterCards) {
+      final source = item.sourceLabel.toLowerCase();
+      final isCard = source.contains('crédito') ||
+          source.contains('credito') ||
+          source.contains('cartão') ||
+          source.contains('cartao');
+      if (!isCard) {
+        return false;
+      }
+    }
+
+    if (_selectedCategory != null && item.category != _selectedCategory) {
+      return false;
+    }
+
+    return true;
   }
 }
 

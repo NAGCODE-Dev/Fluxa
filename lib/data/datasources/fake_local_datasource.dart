@@ -1,21 +1,21 @@
-import 'package:financas/data/datasources/local_datasource.dart';
-import 'package:financas/data/fake/fake_accounts.dart';
-import 'package:financas/data/fake/fake_budgets.dart';
-import 'package:financas/data/fake/fake_calendar_events.dart';
-import 'package:financas/data/fake/fake_cards.dart';
-import 'package:financas/data/fake/fake_goals.dart';
-import 'package:financas/data/fake/fake_subscriptions.dart';
-import 'package:financas/data/fake/fake_transactions.dart';
-import 'package:financas/models/account.dart';
-import 'package:financas/models/budget.dart';
-import 'package:financas/models/calendar_event.dart';
-import 'package:financas/models/card.dart';
-import 'package:financas/models/dashboard_summary.dart';
-import 'package:financas/models/expense_draft.dart';
-import 'package:financas/models/goal.dart';
-import 'package:financas/models/subscription.dart';
-import 'package:financas/models/transaction.dart';
-import 'package:financas/models/user_preferences.dart';
+import 'package:fluxa/data/datasources/local_datasource.dart';
+import 'package:fluxa/data/fake/fake_accounts.dart';
+import 'package:fluxa/data/fake/fake_budgets.dart';
+import 'package:fluxa/data/fake/fake_calendar_events.dart';
+import 'package:fluxa/data/fake/fake_cards.dart';
+import 'package:fluxa/data/fake/fake_goals.dart';
+import 'package:fluxa/data/fake/fake_subscriptions.dart';
+import 'package:fluxa/data/fake/fake_transactions.dart';
+import 'package:fluxa/models/account.dart';
+import 'package:fluxa/models/budget.dart';
+import 'package:fluxa/models/calendar_event.dart';
+import 'package:fluxa/models/card.dart';
+import 'package:fluxa/models/dashboard_summary.dart';
+import 'package:fluxa/models/expense_draft.dart';
+import 'package:fluxa/models/goal.dart';
+import 'package:fluxa/models/subscription.dart';
+import 'package:fluxa/models/transaction.dart';
+import 'package:fluxa/models/user_preferences.dart';
 
 class FakeLocalDatasource implements LocalDatasource {
   @override
@@ -148,7 +148,7 @@ class FakeLocalDatasource implements LocalDatasource {
   @override
   ExpenseDraft getExpenseDraft() {
     return const ExpenseDraft(
-      amount: 120,
+      amount: 0,
       category: 'Mercado',
       source: 'Cartão Santander • Crédito',
       description: '',

@@ -1,4 +1,4 @@
-import 'package:financas/models/subscription.dart';
+import 'package:fluxa/models/subscription.dart';
 
 final fakeSubscriptions = [
   SubscriptionModel(

@@ -1,4 +1,4 @@
-import 'package:financas/models/calendar_event.dart';
+import 'package:fluxa/models/calendar_event.dart';
 
 final fakeCalendarEvents = [
   CalendarEventModel(

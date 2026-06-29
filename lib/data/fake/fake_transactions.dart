@@ -1,4 +1,4 @@
-import 'package:financas/models/transaction.dart';
+import 'package:fluxa/models/transaction.dart';
 
 final fakeTransactions = [
   TransactionModel(

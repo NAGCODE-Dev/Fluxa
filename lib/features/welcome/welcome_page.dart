@@ -1,9 +1,10 @@
-import 'package:financas/core/theme/spacing.dart';
-import 'package:financas/models/user_preferences.dart';
-import 'package:financas/shared/widgets/app_button.dart';
-import 'package:financas/shared/widgets/app_card.dart';
-import 'package:financas/shared/widgets/app_input.dart';
-import 'package:financas/shared/widgets/section_heading.dart';
+import 'package:fluxa/core/theme/brand.dart';
+import 'package:fluxa/core/theme/spacing.dart';
+import 'package:fluxa/models/user_preferences.dart';
+import 'package:fluxa/shared/widgets/app_button.dart';
+import 'package:fluxa/shared/widgets/app_card.dart';
+import 'package:fluxa/shared/widgets/app_input.dart';
+import 'package:fluxa/shared/widgets/section_heading.dart';
 import 'package:flutter/material.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -56,9 +57,8 @@ class _WelcomePageState extends State<WelcomePage> {
           children: [
             const SectionHeading(
               eyebrow: 'Primeiro acesso',
-              title: 'Olá, bem-vindo',
-              description:
-                  'Organize sua vida financeira com leveza. O app guarda seus dados financeiros e suas preferências, não dados pessoais sensíveis.',
+              title: AppBrand.name,
+              description: AppBrand.tagline,
             ),
             const SizedBox(height: AppSpacing.lg + 8),
             AppCard(
