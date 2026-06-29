@@ -8,11 +8,13 @@ class TransactionRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.amount,
+    this.trailing,
   });
 
   final String title;
   final String subtitle;
   final double amount;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,10 @@ class TransactionRow extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           MoneyText(amount: amount),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ],
         ],
       ),
     );

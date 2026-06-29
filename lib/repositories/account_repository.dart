@@ -9,4 +9,12 @@ class AccountRepository {
   List<Account> listAccounts() {
     return _localDatasource.getAccounts();
   }
+
+  Future<void> saveAccount(Account account) {
+    return _localDatasource.saveAccount(account);
+  }
+
+  Future<void> deleteAccount(String accountId) {
+    return _localDatasource.deleteAccount(accountId);
+  }
 }

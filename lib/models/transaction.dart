@@ -23,6 +23,28 @@ class TransactionModel {
 
   bool get isPositive => type == TransactionType.income;
 
+  TransactionModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    double? amount,
+    TransactionType? type,
+    DateTime? occuredAt,
+    String? sourceLabel,
+    String? category,
+  }) {
+    return TransactionModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      type: type ?? this.type,
+      occuredAt: occuredAt ?? this.occuredAt,
+      sourceLabel: sourceLabel ?? this.sourceLabel,
+      category: category ?? this.category,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

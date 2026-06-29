@@ -9,4 +9,12 @@ class CardRepository {
   List<PaymentCard> listCards() {
     return _localDatasource.getCards();
   }
+
+  Future<void> saveCard(PaymentCard card) {
+    return _localDatasource.saveCard(card);
+  }
+
+  Future<void> deleteCard(String cardId) {
+    return _localDatasource.deleteCard(cardId);
+  }
 }

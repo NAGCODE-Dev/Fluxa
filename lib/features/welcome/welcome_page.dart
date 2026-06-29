@@ -12,11 +12,13 @@ class WelcomePage extends StatefulWidget {
     required this.initialPreferences,
     required this.onContinueLocal,
     required this.onSyncWithGoogle,
+    required this.onSyncWithEmail,
   });
 
   final UserPreferences initialPreferences;
-  final ValueChanged<UserPreferences> onContinueLocal;
-  final ValueChanged<UserPreferences> onSyncWithGoogle;
+  final Future<void> Function(UserPreferences preferences) onContinueLocal;
+  final Future<void> Function(UserPreferences preferences) onSyncWithGoogle;
+  final Future<void> Function(UserPreferences preferences) onSyncWithEmail;
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -25,6 +27,7 @@ class WelcomePage extends StatefulWidget {
 class _WelcomePageState extends State<WelcomePage> {
   late final TextEditingController _controller;
   late AppAppearance _appearance;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -119,18 +122,52 @@ class _WelcomePageState extends State<WelcomePage> {
             ),
             const SizedBox(height: AppSpacing.lg + 8),
             AppButton(
-              onPressed: () => widget.onContinueLocal(_preferences),
+              onPressed: _isSubmitting ? null : _continueLocal,
               label: 'Continuar neste aparelho',
             ),
             const SizedBox(height: AppSpacing.md),
             AppButton(
-              onPressed: () => widget.onSyncWithGoogle(_preferences),
+              onPressed: _isSubmitting ? null : _syncWithGoogle,
               label: 'Sincronizar com Google',
               variant: AppButtonVariant.secondary,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Center(
+              child: TextButton(
+                onPressed: _isSubmitting ? null : _syncWithEmail,
+                child: const Text('Usar e-mail para sincronização'),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _continueLocal() async {
+    await _runSubmit(() => widget.onContinueLocal(_preferences));
+  }
+
+  Future<void> _syncWithGoogle() async {
+    await _runSubmit(() => widget.onSyncWithGoogle(_preferences));
+  }
+
+  Future<void> _syncWithEmail() async {
+    await _runSubmit(() => widget.onSyncWithEmail(_preferences));
+  }
+
+  Future<void> _runSubmit(Future<void> Function() action) async {
+    setState(() {
+      _isSubmitting = true;
+    });
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 }

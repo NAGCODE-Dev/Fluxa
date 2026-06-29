@@ -11,21 +11,25 @@ class AddExpenseSheet extends StatefulWidget {
     super.key,
     required this.draft,
     required this.categories,
+    required this.sources,
   });
 
   final ExpenseDraft draft;
   final List<String> categories;
+  final List<String> sources;
 
   static Future<ExpenseDraft?> show(
     BuildContext context, {
     required ExpenseDraft draft,
     required List<String> categories,
+    required List<String> sources,
   }) {
     return AppBottomSheet.show<ExpenseDraft>(
       context: context,
       child: AddExpenseSheet(
         draft: draft,
         categories: categories,
+        sources: sources,
       ),
     );
   }
@@ -36,9 +40,9 @@ class AddExpenseSheet extends StatefulWidget {
 
 class _AddExpenseSheetState extends State<AddExpenseSheet> {
   late final TextEditingController _amountController;
-  late final TextEditingController _sourceController;
   late final TextEditingController _descriptionController;
   late String _selectedCategory;
+  late String _selectedSource;
 
   @override
   void initState() {
@@ -46,17 +50,18 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     _amountController = TextEditingController(
       text: widget.draft.amount.toStringAsFixed(2),
     );
-    _sourceController = TextEditingController(text: widget.draft.source);
     _descriptionController = TextEditingController(text: widget.draft.description);
     _selectedCategory = widget.categories.contains(widget.draft.category)
         ? widget.draft.category
         : widget.categories.first;
+    _selectedSource = widget.sources.contains(widget.draft.source)
+        ? widget.draft.source
+        : widget.sources.first;
   }
 
   @override
   void dispose() {
     _amountController.dispose();
-    _sourceController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -108,10 +113,28 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               },
             ),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(
-              controller: _sourceController,
-              label: 'Origem',
-              hint: 'Cartão Santander • Crédito',
+            DropdownButtonFormField<String>(
+              initialValue: _selectedSource,
+              decoration: const InputDecoration(
+                labelText: 'Origem',
+              ),
+              items: widget.sources
+                  .map(
+                    (source) => DropdownMenuItem(
+                      value: source,
+                      child: Text(source),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+
+                setState(() {
+                  _selectedSource = value;
+                });
+              },
             ),
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(
@@ -153,20 +176,11 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
       );
       return;
     }
-
-    final source = _sourceController.text.trim();
-    if (source.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe a origem da despesa.')),
-      );
-      return;
-    }
-
     Navigator.of(context).pop(
       ExpenseDraft(
         amount: parsedAmount,
         category: _selectedCategory,
-        source: source,
+        source: _selectedSource,
         description: _descriptionController.text.trim(),
       ),
     );

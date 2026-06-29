@@ -21,6 +21,8 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = displayName.orFallback('você');
+    final savingsIsPositive = summary.monthSavings >= 0;
+    final savingsPrefix = savingsIsPositive ? '+' : '-';
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
       children: [
@@ -46,9 +48,11 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                '+ ${summary.monthSavings.toMoney()} de economia no mês',
+                '$savingsPrefix ${summary.monthSavings.abs().toMoney()} ${savingsIsPositive ? 'de economia' : 'de saída'} no mês',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.success,
+                      color: savingsIsPositive
+                          ? AppColors.success
+                          : AppColors.danger,
                       fontWeight: FontWeight.w700,
                     ),
               ),

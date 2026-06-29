@@ -24,12 +24,22 @@ class DashboardSummary {
   const DashboardSummary({
     required this.currentBalance,
     required this.monthSavings,
+    required this.monthIncome,
+    required this.monthExpense,
+    required this.totalCardAvailable,
+    required this.totalCurrentInvoice,
+    required this.totalTransactions,
     required this.metrics,
     required this.agenda,
   });
 
   final double currentBalance;
   final double monthSavings;
+  final double monthIncome;
+  final double monthExpense;
+  final double totalCardAvailable;
+  final double totalCurrentInvoice;
+  final int totalTransactions;
   final List<DashboardMetric> metrics;
   final List<DashboardAgendaItem> agenda;
 }

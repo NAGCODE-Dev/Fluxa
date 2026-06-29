@@ -13,4 +13,16 @@ class ExpenseRepository {
   List<String> getCategories() {
     return _localDatasource.getCategories();
   }
+
+  List<String> getSources() {
+    return _localDatasource.getExpenseSources();
+  }
+
+  Future<void> saveCategory(String category) {
+    return _localDatasource.saveCategory(category);
+  }
+
+  Future<void> deleteCategory(String category) {
+    return _localDatasource.deleteCategory(category);
+  }
 }

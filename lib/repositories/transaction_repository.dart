@@ -14,4 +14,20 @@ class TransactionRepository {
   Future<void> addExpense(ExpenseDraft draft) {
     return _localDatasource.addExpense(draft);
   }
+
+  Future<void> saveTransaction(TransactionModel transaction) {
+    return _localDatasource.saveTransaction(transaction);
+  }
+
+  Future<void> deleteTransaction(String transactionId) {
+    return _localDatasource.deleteTransaction(transactionId);
+  }
+
+  Future<String> exportData() {
+    return _localDatasource.exportData();
+  }
+
+  Future<void> importData(String rawData) {
+    return _localDatasource.importData(rawData);
+  }
 }
