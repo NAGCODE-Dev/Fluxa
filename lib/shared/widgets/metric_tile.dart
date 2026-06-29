@@ -1,0 +1,29 @@
+import 'package:financas/models/dashboard_summary.dart';
+import 'package:financas/shared/widgets/app_card.dart';
+import 'package:flutter/material.dart';
+
+class MetricTile extends StatelessWidget {
+  const MetricTile({
+    super.key,
+    required this.metric,
+  });
+
+  final DashboardMetric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(metric.label, style: textTheme.labelLarge),
+          const SizedBox(height: 10),
+          Text(metric.valueLabel, style: textTheme.titleLarge),
+          const SizedBox(height: 6),
+          Text(metric.caption, style: textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+}

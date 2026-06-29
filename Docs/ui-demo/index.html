@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance UI Demonstrations</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">UI Demonstration Pack</p>
+        <h1>Gestão financeira pessoal pronta para validação visual</h1>
+        <p class="hero-body">
+          Este pacote demonstra a linguagem visual, os principais fluxos mobile,
+          os estados obrigatórios e a direção do desktop companion antes de
+          qualquer implementação funcional.
+        </p>
+        <div class="hero-chips">
+          <span class="chip chip-primary">3 abas principais</span>
+          <span class="chip">Light + Dark</span>
+          <span class="chip">Estados globais</span>
+          <span class="chip">Desktop analítico</span>
+        </div>
+      </div>
+      <div class="hero-summary surface">
+        <h2>Resumo da etapa</h2>
+        <ul>
+          <li>Dashboard mobile sem ruído visual</li>
+          <li>Entrada rápida de gasto e receita</li>
+          <li>Histórico com busca e filtros</li>
+          <li>Planejamento com metas, orçamento e previsão</li>
+          <li>Desktop companion para análise, não réplica do mobile</li>
+        </ul>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">01</p>
+          <h2>Design System Demonstration</h2>
+          <p>
+            Base visual para validar cor, contraste, botões, chips, cards e
+            estados de sistema.
+          </p>
+        </div>
+
+        <div class="system-grid">
+          <article class="surface token-card">
+            <h3>Paleta principal</h3>
+            <div class="swatches">
+              <div><span class="swatch swatch-primary"></span><strong>Primary</strong><small>#14B8A6</small></div>
+              <div><span class="swatch swatch-secondary"></span><strong>Secondary</strong><small>#2563EB</small></div>
+              <div><span class="swatch swatch-success"></span><strong>Success</strong><small>#10B981</small></div>
+              <div><span class="swatch swatch-warning"></span><strong>Warning</strong><small>#F59E0B</small></div>
+              <div><span class="swatch swatch-danger"></span><strong>Error</strong><small>#EF4444</small></div>
+            </div>
+          </article>
+
+          <article class="surface token-card">
+            <h3>Botões</h3>
+            <div class="button-stack">
+              <button class="btn btn-primary">Salvar movimentação</button>
+              <button class="btn btn-secondary">Revisar orçamento</button>
+              <button class="btn btn-ghost">Ver detalhes</button>
+              <button class="btn btn-primary" disabled>Indisponível</button>
+            </div>
+          </article>
+
+          <article class="surface token-card">
+            <h3>Estados de feedback</h3>
+            <div class="state-stack">
+              <div class="notice notice-success">Sincronização concluída.</div>
+              <div class="notice notice-warning">O orçamento de mercado está perto do limite.</div>
+              <div class="notice notice-error">Não foi possível atualizar os dados agora.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">02</p>
+          <h2>Mobile Demonstrations</h2>
+          <p>
+            Conjunto de telas centrais para aprovar direção visual, hierarquia
+            e densidade de informação.
+          </p>
+        </div>
+
+        <div class="device-grid">
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Boas-vindas</span>
+              </div>
+              <section class="hero-balance card">
+                <small>Olá, bem-vindo</small>
+                <h3>Organize sua vida financeira com leveza</h3>
+                <p>Seu nome e aparência são opcionais. O app guarda seus dados financeiros, não dados pessoais sensíveis.</p>
+              </section>
+              <section class="form-card card">
+                <small>Como você quer ser chamado?</small>
+                <div class="field">Nik</div>
+                <small>Aparência</small>
+                <div class="chip-row">
+                  <span class="chip chip-primary">Calmo</span>
+                  <span class="chip">Claro</span>
+                  <span class="chip">Escuro</span>
+                </div>
+              </section>
+              <section class="notice-block card">
+                <h4>Privacidade primeiro</h4>
+                <p>Não salvamos número completo de cartão, CVV ou credenciais bancárias. Entrar com Google serve para sincronizar seus dados entre aparelhos.</p>
+              </section>
+              <div class="cta-stack">
+                <button class="btn btn-primary">Continuar neste aparelho</button>
+                <button class="btn btn-secondary">Sincronizar com Google</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Início</span>
+              </div>
+              <section class="hero-balance card">
+                <small>Saldo atual</small>
+                <h3>R$ 8.420,50</h3>
+                <p class="positive">+ R$ 1.240 de economia no mês</p>
+              </section>
+              <section class="metrics">
+                <div class="metric card">
+                  <small>Cartões</small>
+                  <strong>R$ 1.860</strong>
+                  <span>R$ 2.340 disponíveis</span>
+                </div>
+                <div class="metric card">
+                  <small>Meta principal</small>
+                  <strong>68%</strong>
+                  <span>Notebook em 7 meses</span>
+                </div>
+              </section>
+              <section class="agenda card">
+                <h4>Próximos eventos</h4>
+                <div class="row"><span>Fechamento Nubank</span><strong>amanhã</strong></div>
+                <div class="row"><span>Spotify</span><strong>02 jul</strong></div>
+                <div class="row"><span>Aporte meta</span><strong>4 dias</strong></div>
+              </section>
+              <nav class="bottom-nav">
+                <a class="active">Início</a>
+                <a>Histórico</a>
+                <a>Planejamento</a>
+              </nav>
+            </div>
+          </article>
+
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Adicionar gasto</span>
+              </div>
+              <section class="form-card card">
+                <small>Valor</small>
+                <h3>R$ 120,00</h3>
+                <small>Categoria</small>
+                <div class="chip-row">
+                  <span class="chip chip-primary">Mercado</span>
+                  <span class="chip">Transporte</span>
+                  <span class="chip">Saúde</span>
+                </div>
+                <small>Origem</small>
+                <div class="field">Cartão Santander • Crédito</div>
+                <small>Descrição</small>
+                <div class="field muted">Opcional</div>
+              </section>
+              <div class="cta-stack">
+                <button class="btn btn-primary">Salvar em 1 toque</button>
+                <button class="btn btn-secondary">Parcelar</button>
+              </div>
+              <section class="notice-block card dark-callout">
+                <h4>Registro rápido</h4>
+                <p>O fluxo prioriza valor, categoria e origem acima da dobra.</p>
+              </section>
+            </div>
+          </article>
+
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Histórico</span>
+              </div>
+              <div class="search">Buscar mercado, uber, salário...</div>
+              <div class="chip-row">
+                <span class="chip chip-primary">Mês</span>
+                <span class="chip">Cartões</span>
+                <span class="chip">Mercado</span>
+              </div>
+              <section class="list">
+                <div class="transaction card">
+                  <div><strong>Mercado Extra</strong><small>Hoje • Débito Santander</small></div>
+                  <span class="negative">- R$ 186,40</span>
+                </div>
+                <div class="transaction card">
+                  <div><strong>Salário</strong><small>Hoje • Conta principal</small></div>
+                  <span class="positive">+ R$ 3.500,00</span>
+                </div>
+                <div class="transaction card">
+                  <div><strong>Spotify</strong><small>Ontem • Nubank</small></div>
+                  <span class="negative">- R$ 21,90</span>
+                </div>
+                <div class="transaction card">
+                  <div><strong>Uber</strong><small>21 jun • Crédito Santander</small></div>
+                  <span class="negative">- R$ 27,50</span>
+                </div>
+              </section>
+              <nav class="bottom-nav">
+                <a>Início</a>
+                <a class="active">Histórico</a>
+                <a>Planejamento</a>
+              </nav>
+            </div>
+          </article>
+
+          <article class="phone dark">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Planejamento</span>
+              </div>
+              <section class="hero-balance card">
+                <small>Previsão 30 dias</small>
+                <h3>R$ 6.980,00</h3>
+                <p>Inclui assinaturas, vencimentos e metas.</p>
+              </section>
+              <section class="metrics">
+                <div class="metric card">
+                  <small>Meta notebook</small>
+                  <strong>68%</strong>
+                  <span>R$ 2.720 de R$ 4.000</span>
+                </div>
+                <div class="metric card">
+                  <small>Mercado</small>
+                  <strong>R$ 612</strong>
+                  <span>Restam R$ 188</span>
+                </div>
+              </section>
+              <section class="agenda card">
+                <h4>Modo “E se?”</h4>
+                <p>Cancelar Spotify e guardar R$ 100 extras adianta a meta em 2 meses.</p>
+                <div class="chip-row">
+                  <span class="chip chip-primary">R$ 121 liberados</span>
+                  <span class="chip chip-secondary">-2 meses</span>
+                </div>
+              </section>
+              <nav class="bottom-nav">
+                <a>Início</a>
+                <a>Histórico</a>
+                <a class="active">Planejamento</a>
+              </nav>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">03</p>
+          <h2>State Demonstrations</h2>
+          <p>Validação dos estados globais obrigatórios antes da implementação.</p>
+        </div>
+
+        <div class="state-demo-grid">
+          <article class="surface state-card">
+            <h3>Loading</h3>
+            <div class="skeleton skeleton-lg"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </article>
+          <article class="surface state-card">
+            <h3>Empty</h3>
+            <p>Nenhuma movimentação registrada ainda.</p>
+            <button class="btn btn-primary">Adicionar primeira entrada</button>
+          </article>
+          <article class="surface state-card">
+            <h3>Error</h3>
+            <p>Não foi possível carregar os dados deste período.</p>
+            <button class="btn btn-secondary">Tentar novamente</button>
+          </article>
+          <article class="surface state-card">
+            <h3>Offline</h3>
+            <p>Você está sem internet. As novas entradas serão sincronizadas depois.</p>
+            <span class="chip">Modo offline ativo</span>
+          </article>
+          <article class="surface state-card">
+            <h3>Syncing</h3>
+            <p>3 movimentações aguardando envio.</p>
+            <div class="progress-bar"><span></span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">04</p>
+          <h2>Feature Demonstrations</h2>
+          <p>
+            Telas adicionais para validar as áreas que ainda não estavam
+            explícitas no primeiro showcase: cartões, metas, WhatsApp, premium
+            e biblioteca financeira.
+          </p>
+        </div>
+
+        <div class="bank-skin-grid">
+          <article class="surface token-card">
+            <h3>Card skin catalog</h3>
+            <p>
+              Catálogo inicial de skins fictícios por banco para diferenciar
+              visualmente cartões sem copiar modelos reais.
+            </p>
+            <div class="bank-chip-grid">
+              <span class="chip bank-nubank">Nubank</span>
+              <span class="chip bank-santander">Santander</span>
+              <span class="chip bank-itau">Itaú</span>
+              <span class="chip bank-bb">Banco do Brasil</span>
+              <span class="chip bank-c6">C6</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="device-grid">
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Cartões</span>
+              </div>
+              <section class="credit-card-hero bank-card bank-nubank-surface">
+                <small>Cartão principal</small>
+                <h3>Nubank</h3>
+                <div class="card-number">•••• 2841</div>
+                <div class="row"><span>Limite total</span><strong>R$ 4.200</strong></div>
+                <div class="row"><span>Disponível</span><strong>R$ 1.860</strong></div>
+              </section>
+              <section class="mini-card-stack">
+                <div class="mini-card bank-card bank-santander-surface">
+                  <strong>Santander</strong>
+                  <span>•••• 0912</span>
+                </div>
+                <div class="mini-card bank-card bank-itau-surface">
+                  <strong>Itaú</strong>
+                  <span>•••• 5730</span>
+                </div>
+              </section>
+              <section class="agenda card">
+                <h4>Detalhes rápidos</h4>
+                <div class="row"><span>Fechamento</span><strong>amanhã</strong></div>
+                <div class="row"><span>Vencimento</span><strong>03 jul</strong></div>
+                <div class="row"><span>Fatura atual</span><strong>R$ 2.340</strong></div>
+              </section>
+              <button class="btn btn-primary">Ver fatura completa</button>
+            </div>
+          </article>
+
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Metas</span>
+              </div>
+              <section class="goal-card card">
+                <small>Meta principal</small>
+                <h3>Notebook</h3>
+                <p>R$ 2.720 de R$ 4.000</p>
+                <div class="progress-bar"><span style="width:68%"></span></div>
+                <div class="row"><span>Concluído</span><strong>68%</strong></div>
+                <div class="row"><span>Prazo estimado</span><strong>7 meses</strong></div>
+              </section>
+              <section class="goal-card card">
+                <small>Meta secundária</small>
+                <h3>Reserva</h3>
+                <p>R$ 980 de R$ 3.000</p>
+                <div class="progress-bar"><span style="width:33%"></span></div>
+                <div class="row"><span>Concluído</span><strong>33%</strong></div>
+                <div class="row"><span>Prazo estimado</span><strong>11 meses</strong></div>
+              </section>
+              <button class="btn btn-primary">Criar nova meta</button>
+            </div>
+          </article>
+
+          <article class="phone dark">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>WhatsApp</span>
+              </div>
+              <section class="agenda card">
+                <h4>Integração ativa</h4>
+                <p>Envie mensagens curtas para registrar sem abrir o aplicativo.</p>
+                <div class="chip-row">
+                  <span class="chip chip-primary">mercado 120</span>
+                  <span class="chip chip-secondary">uber 25</span>
+                </div>
+              </section>
+              <section class="list">
+                <div class="transaction card">
+                  <div><strong>ifood 45 crédito santander</strong><small>Interpretado com sucesso</small></div>
+                  <span class="positive">registrado</span>
+                </div>
+                <div class="transaction card">
+                  <div><strong>net 89</strong><small>Categoria ambígua, revisão pendente</small></div>
+                  <span class="negative">revisar</span>
+                </div>
+              </section>
+              <button class="btn btn-secondary">Abrir mensagens pendentes</button>
+            </div>
+          </article>
+
+          <article class="phone light">
+            <div class="phone-screen">
+              <div class="topbar">
+                <span>09:41</span>
+                <span>Premium</span>
+              </div>
+              <section class="pricing-hero card">
+                <small>Premium</small>
+                <h3>Mais conveniência, sem tirar o essencial do plano gratuito</h3>
+                <div class="price-line">
+                  <strong>R$ 14,90</strong>
+                  <span>/ mês</span>
+                </div>
+              </section>
+              <section class="agenda card">
+                <h4>Inclui</h4>
+                <div class="row"><span>WhatsApp ilimitado</span><strong>✓</strong></div>
+                <div class="row"><span>Relatórios automáticos</span><strong>✓</strong></div>
+                <div class="row"><span>Simulações avançadas</span><strong>✓</strong></div>
+              </section>
+              <button class="btn btn-primary">Assinar premium</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">05</p>
+          <h2>Library and Simulation Demonstrations</h2>
+          <p>
+            Direção visual para a Biblioteca Financeira e para o simulador
+            educativo, sem transformar o produto em corretora.
+          </p>
+        </div>
+
+        <div class="library-grid">
+          <article class="surface library-card">
+            <small>Biblioteca Financeira</small>
+            <h3>Aprender sem operar</h3>
+            <p>
+              Conteúdo educativo, dados públicos e atalhos para entender Selic,
+              CDI, IPCA, cartões e organização financeira.
+            </p>
+            <div class="chip-row">
+              <span class="chip">Selic</span>
+              <span class="chip">CDI</span>
+              <span class="chip">IPCA</span>
+              <span class="chip">Reserva</span>
+            </div>
+          </article>
+
+          <article class="surface library-card">
+            <small>Simulador</small>
+            <h3>Quanto terei em 24 meses?</h3>
+            <div class="sim-row"><span>Valor inicial</span><strong>R$ 1.000</strong></div>
+            <div class="sim-row"><span>Aporte mensal</span><strong>R$ 200</strong></div>
+            <div class="sim-row"><span>Taxa usada</span><strong>Selic 14,75%</strong></div>
+            <div class="sim-row"><span>Resultado estimado</span><strong>R$ 6.912</strong></div>
+          </article>
+
+          <article class="surface library-card">
+            <small>Indicadores</small>
+            <h3>Dados públicos e auditáveis</h3>
+            <div class="sim-row"><span>Selic</span><strong>14,75% a.a.</strong></div>
+            <div class="sim-row"><span>CDI</span><strong>14,65% a.a.</strong></div>
+            <div class="sim-row"><span>IPCA</span><strong>4,22% a.a.</strong></div>
+            <p class="source-note">Fonte: Banco Central · Atualizado em 28/06/2026</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">06</p>
+          <h2>User Flow Demonstrations</h2>
+          <p>
+            Fluxos curtos e diretos para validar a lógica de produto antes da
+            implementação.
+          </p>
+        </div>
+
+        <div class="flow-grid">
+          <article class="surface flow-card">
+            <h3>Registrar gasto</h3>
+            <ol>
+              <li>Dashboard ou FAB</li>
+              <li>Adicionar gasto</li>
+              <li>Salvar em 1 toque</li>
+              <li>Histórico atualizado</li>
+            </ol>
+          </article>
+          <article class="surface flow-card">
+            <h3>Criar meta</h3>
+            <ol>
+              <li>Planejamento</li>
+              <li>Nova meta</li>
+              <li>Definir valor e prazo</li>
+              <li>Meta aparece no dashboard</li>
+            </ol>
+          </article>
+          <article class="surface flow-card">
+            <h3>Sincronização offline</h3>
+            <ol>
+              <li>Usuário registra sem internet</li>
+              <li>Estado offline visível</li>
+              <li>Fila local preservada</li>
+              <li>Sync discreto quando a rede volta</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <p class="eyebrow">07</p>
+          <h2>Desktop Companion Demonstration</h2>
+          <p>
+            A camada desktop é analítica. Ela não repete o mobile; ela amplia a
+            leitura e a tomada de decisão.
+          </p>
+        </div>
+
+        <article class="desktop-shell">
+          <aside class="desktop-sidebar">
+            <h3>Companion</h3>
+            <nav>
+              <a class="active">Visão Geral</a>
+              <a>Relatórios</a>
+              <a>Planejamento</a>
+              <a>Calendário</a>
+              <a>Comparativos</a>
+              <a>Simulações</a>
+              <a>Indicadores</a>
+            </nav>
+          </aside>
+          <div class="desktop-main">
+            <div class="desktop-kpis">
+              <div class="surface kpi"><small>Saldo projetado</small><strong>R$ 6.980</strong></div>
+              <div class="surface kpi"><small>Cartão mais pressionado</small><strong>Nubank 79%</strong></div>
+              <div class="surface kpi"><small>Orçamento em risco</small><strong>Mercado</strong></div>
+              <div class="surface kpi"><small>Meta mais próxima</small><strong>Notebook</strong></div>
+            </div>
+            <div class="desktop-panels">
+              <section class="surface panel panel-large">
+                <h4>Tendência mensal</h4>
+                <div class="chart-bars">
+                  <span style="height: 42%"></span>
+                  <span style="height: 67%"></span>
+                  <span style="height: 58%"></span>
+                  <span style="height: 81%"></span>
+                  <span style="height: 74%"></span>
+                  <span style="height: 62%"></span>
+                </div>
+              </section>
+              <section class="surface panel">
+                <h4>Próximos vencimentos</h4>
+                <div class="row"><span>Nubank</span><strong>03 jul</strong></div>
+                <div class="row"><span>Spotify</span><strong>02 jul</strong></div>
+                <div class="row"><span>Reserva emergência</span><strong>05 jul</strong></div>
+              </section>
+              <section class="surface panel">
+                <h4>Comparativos</h4>
+                <p>Mercado subiu 14% contra a média dos últimos 3 meses.</p>
+                <button class="btn btn-ghost">Abrir análise</button>
+              </section>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+  </html>

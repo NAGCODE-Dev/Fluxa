@@ -1,0 +1,43 @@
+import 'package:financas/models/card.dart';
+
+const fakeCards = [
+  PaymentCard(
+    id: 'card-nubank',
+    bankName: 'Nubank',
+    name: 'Cartão principal',
+    maskedNumber: '•••• 2841',
+    limitAmount: 4200,
+    availableAmount: 1860,
+    currentInvoice: 2340,
+    closingLabel: 'amanhã',
+    dueLabel: '03 jul',
+    backgroundColor: 0xFF7C3AED,
+    accentColor: 0xFFC4B5FD,
+  ),
+  PaymentCard(
+    id: 'card-santander',
+    bankName: 'Santander',
+    name: 'Crédito',
+    maskedNumber: '•••• 0912',
+    limitAmount: 3000,
+    availableAmount: 1200,
+    currentInvoice: 1800,
+    closingLabel: '05 jul',
+    dueLabel: '12 jul',
+    backgroundColor: 0xFFDC2626,
+    accentColor: 0xFFFDA4AF,
+  ),
+  PaymentCard(
+    id: 'card-itau',
+    bankName: 'Itaú',
+    name: 'Crédito',
+    maskedNumber: '•••• 5730',
+    limitAmount: 2600,
+    availableAmount: 1720,
+    currentInvoice: 880,
+    closingLabel: '08 jul',
+    dueLabel: '15 jul',
+    backgroundColor: 0xFFF97316,
+    accentColor: 0xFF60A5FA,
+  ),
+];
