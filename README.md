@@ -1,53 +1,144 @@
-# Fluxa
+# <p align="center">
+  <img src="assets/branding/logo.png" width="110" alt="Fluxa Logo"/>
+</p>
 
-Vertical slice Flutter do produto definido em `Docs/`.
+<h1 align="center">Fluxa</h1>
 
-## Escopo atual
-- boas-vindas e personalização leve
-- dashboard
-- adicionar gasto
-- histórico
-- cartões com skins fictícios por banco
+<p align="center">
+Organize sua vida financeira com simplicidade.
+</p>
 
-## Princípios aplicados
-- mobile first
-- dashboard sem ruído visual
-- login Google tratado como sincronização opcional
-- nenhum dado confidencial de cartão exposto na UI
-- estrutura pronta para expandir sem reescrever a base
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter">
+  <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart">
+  <img src="https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase">
+  <img src="https://img.shields.io/badge/License-MIT-success">
+</p>
 
-## Estrutura
-- `lib/app`: ponto de entrada do app
-- `lib/core`: tokens de tema e extensões
-- `lib/shared`: widgets reutilizáveis
-- `lib/models`: entidades e read models
-- `lib/data`: fake data e datasource local
-- `lib/repositories`: contratos simples de acesso a dados
-- `lib/features`: telas e fluxo principal
-- `Docs/`: PRD, regras de UX e demo original
+---
 
-## Regra atual de desenvolvimento
-Nenhuma tela nova deve nascer fora dessa base:
-- tokens primeiro
-- widget reutilizável depois
-- model/read model depois
-- repository/datasource depois
-- tela por último
+## ✨ Sobre
 
-## Execução
-Quando o Flutter SDK estiver instalado:
+Fluxa é um aplicativo moderno de controle financeiro pessoal criado para tornar o acompanhamento de gastos simples, rápido e agradável.
+
+Ao invés de transformar o usuário em um contador, o objetivo é oferecer uma experiência intuitiva onde registrar despesas leva apenas alguns segundos.
+
+O foco é eliminar atritos e criar o hábito de acompanhar as próprias finanças diariamente.
+
+---
+
+## 🎯 Objetivos
+
+- Controle financeiro simples
+- Interface minimalista
+- Dashboard sem poluição visual
+- Registro rápido de despesas
+- Histórico inteligente
+- Sincronização em nuvem
+- Expansão modular
+
+---
+
+## 📱 Preview
+
+> Em breve
+
+Aqui entrarão screenshots do aplicativo.
+
+---
+
+## 🎨 Design
+
+A identidade visual segue três princípios:
+
+- Clareza
+- Movimento
+- Controle
+
+A interface utiliza bastante espaço em branco, azul como cor principal e componentes minimalistas.
+
+---
+
+## 🏗 Arquitetura
+
+```
+lib/
+ ├── app/
+ ├── core/
+ ├── data/
+ ├── features/
+ ├── models/
+ ├── repositories/
+ └── shared/
+```
+
+---
+
+## 🚀 Tecnologias
+
+- Flutter
+- Dart
+- Supabase
+- Material 3
+
+---
+
+## 📦 Como executar
 
 ```bash
+git clone https://github.com/NAGCODE-Dev/Fluxa.git
+
+cd Fluxa
+
 flutter pub get
+
 flutter run
 ```
 
-## Marca
-- Símbolo oficial da marca: `assets/brand/source/fluxa-symbol-master.svg`
-- Prancha oficial da marca: `assets/brand/source/fluxa-board-master.svg`
-- Exports prontos para uso: `assets/brand/fluxa-symbol-1024.png`, `assets/brand/fluxa-lockup-dark.png` e `assets/brand/fluxa-brand-board.png`
-- `assets/brand/source` deve conter apenas os masters oficiais editáveis
-- Para regenerar branding, ícone e splash: `source .venv-brand/bin/activate && python tool/generate_brand_assets.py`
+---
 
-## Limitação deste ambiente
-O SDK `flutter` não está instalado na máquina atual, então o código foi estruturado mas não pôde ser compilado ou testado localmente daqui.
+## 🛣 Roadmap
+
+- [x] Dashboard
+- [x] Histórico
+- [x] Cadastro de gastos
+- [x] Sistema de cartões
+- [ ] Supabase
+- [ ] Login Google
+- [ ] Categorias inteligentes
+- [ ] Estatísticas
+- [ ] Backup em nuvem
+- [ ] Publicação Android
+
+---
+
+## 📁 Documentação
+
+Toda a documentação do projeto encontra-se na pasta:
+
+```
+Docs/
+```
+
+Incluindo:
+
+- Arquitetura
+- PRD
+- UX
+- Componentes
+- Fluxos
+- Banco de dados
+
+---
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas.
+
+Abra uma Issue ou envie um Pull Request.
+
+---
+
+## 📄 Licença
+
+MIT License.
