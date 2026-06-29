@@ -1,45 +1,110 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# ===========================
+# Operating System
+# ===========================
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+.cache/
+.history/
 
-# IntelliJ related
+# ===========================
+# IDEs
+# ===========================
+.idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Se quiser compartilhar launch.json/tasks.json,
+# remova a linha acima e ignore apenas:
+# .vscode/settings.json
 
-# Flutter/Dart/Pub related
+# ===========================
+# Dart / Flutter
+# ===========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+
 **/doc/api/
 **/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
 
-# Symbolication related
+generated_plugin_registrant.dart
+
+# ===========================
+# Android
+# ===========================
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+local.properties
+key.properties
+
+*.jks
+*.keystore
+
+# ===========================
+# iOS
+# ===========================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+
+# ===========================
+# Linux / macOS build
+# ===========================
+build/
+
+# ===========================
+# Environment Variables
+# ===========================
+.env
+.env.*
+!.env.example
+
+dart_define.json
+dart_defines.json
+
+# ===========================
+# Supabase
+# ===========================
+supabase/.temp/
+supabase/.branches/
+
+# ===========================
+# Logs
+# ===========================
+*.log
+firebase-debug.log
+
+# ===========================
+# Python (scripts)
+# ===========================
+*.pyc
+__pycache__/
+
+# ===========================
+# Generated
+# ===========================
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# ===========================
+# AI / Development
+# ===========================
+.agents/
+
+# ===========================
+# FVM (caso utilize)
+# ===========================
+.fvm/
