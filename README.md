@@ -1,5 +1,5 @@
 # <p align="center">
-  <img src="assets/branding/logo.png" width="110" alt="Fluxa Logo"/>
+  <img src="assets/brand/fluxa-lockup-light.png" width="220" alt="Fluxa Logo"/>
 </p>
 
 <h1 align="center">Fluxa</h1>
@@ -13,6 +13,7 @@ Organize sua vida financeira com simplicidade.
   <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart">
   <img src="https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase">
   <img src="https://img.shields.io/badge/License-MIT-success">
+  <img src="https://img.shields.io/badge/V1-1.0.0-2563EB">
 </p>
 
 ---
@@ -41,9 +42,7 @@ O foco é eliminar atritos e criar o hábito de acompanhar as próprias finança
 
 ## 📱 Preview
 
-> Em breve
-
-Aqui entrarão screenshots do aplicativo.
+A V1 publicável entrega Android por APK e iPhone/iOS via Fluxa Web como PWA. A pasta `assets/brand/` reúne os materiais oficiais da marca, incluindo ícone, lockup, splash e prévias visuais do Fluxa.
 
 ---
 
@@ -126,22 +125,19 @@ O botão de iPhone abre `Fluxa Web` em `/app/`.
 No Vercel, importe este repositório sem framework preset especial.
 
 - Root Directory: `.`
-- Build Command: vazio
-- Output Directory: vazio
+- Build Command: `bash scripts/vercel_build.sh`
+- Output Directory: `.vercel/output/static`
 
-O `vercel.json` já aponta `/` para `site/index.html`.
-
-Para a V1, o caminho mais simples é publicar o repositório com a pasta `build/web` já gerada no deploy.
-Depois, se quiser, dá para automatizar um deploy web dedicado no Vercel via CI.
+O `vercel.json` usa esse script para instalar Flutter quando necessário, compilar `flutter build web --release --base-href /app/` e publicar a landing na raiz com o app em `/app/`.
 
 ### Fluxa Web
 
 O app já compila para web e pode ser servido no mesmo projeto em `/app/`.
 
 - Android: continua baixando o APK via release.
-- iPhone: usa Safari + `Adicionar à Tela de Início`.
-- Build web: o workflow usa `flutter build web --base-href /app/`.
-- Landing: o botão `Usar no iPhone` já aponta para `/app/` em [site/app.js](/home/nikolasa/Downloads/FinanceHub/site/app.js:1).
+- iPhone/iOS: usa Fluxa Web no Safari e pode ser instalado por `Compartilhar` > `Adicionar à Tela de Início`.
+- Build web: o workflow e o Vercel usam `flutter build web --release --base-href /app/`.
+- Landing: o botão `Usar no iPhone` aponta para `/app/`, mantendo o caminho PWA claro para a V1.
 
 ### Captura assistida por notificações
 
