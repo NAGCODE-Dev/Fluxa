@@ -146,7 +146,16 @@ class SyncQueueTable extends Table {
 class AppDatabase extends _$AppDatabase {
   // ignore: use_super_parameters
   AppDatabase([QueryExecutor? executor])
-      : super(executor ?? driftDatabase(name: 'financas_app'));
+      : super(
+          executor ??
+              driftDatabase(
+                name: 'financas_app',
+                web: DriftWebOptions(
+                  sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+                  driftWorker: Uri.parse('drift_worker.js'),
+                ),
+              ),
+        );
 
   // ignore: use_super_parameters
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);

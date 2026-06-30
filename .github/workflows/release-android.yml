@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Resolve tag
+      - name: Resolve release metadata
         id: meta
         shell: bash
         run: |
@@ -35,7 +35,11 @@ jobs:
           else
             TAG="${GITHUB_REF_NAME}"
           fi
+          VERSION="${TAG#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "apk_name=fluxa-$TAG.apk" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java
@@ -57,7 +61,7 @@ jobs:
         run: flutter analyze
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name "${{ steps.meta.outputs.version }}" --build-number "${{ steps.meta.outputs.build_number }}"
 
       - name: Rename APK
         run: cp build/app/outputs/flutter-apk/app-release.apk "${{ steps.meta.outputs.apk_name }}"
