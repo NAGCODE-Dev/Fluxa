@@ -136,6 +136,7 @@ O app já compila para web e pode ser servido no mesmo projeto em `/app/`.
 
 - Android: continua baixando o APK via release.
 - iPhone/iOS: usa Fluxa Web no Safari e pode ser instalado por `Compartilhar` > `Adicionar à Tela de Início`.
+- Build web: gere os assets do Drift com `dart run drift_dev web`; depois o workflow e o Vercel usam `flutter build web --release --base-href /app/`.
 - Build web: o workflow e o Vercel usam `flutter build web --release --base-href /app/`.
 - Landing: o botão `Usar no iPhone` aponta para `/app/`, mantendo o caminho PWA claro para a V1.
 
