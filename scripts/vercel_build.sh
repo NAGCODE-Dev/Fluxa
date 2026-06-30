@@ -12,7 +12,6 @@ fi
 
 flutter config --enable-web
 flutter pub get
-dart run drift_dev web
 flutter build web --release --base-href /app/
 
 rm -rf .vercel/output
