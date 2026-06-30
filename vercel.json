@@ -2,16 +2,6 @@
   "buildCommand": "bash scripts/vercel_build.sh",
   "outputDirectory": ".vercel/output/static",
   "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/app/:path*",
-      "destination": "/build/web/:path*"
-    },
-    {
-      "source": "/",
-      "destination": "/site/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/app/(.*)",

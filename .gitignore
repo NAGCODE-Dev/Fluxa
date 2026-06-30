@@ -108,3 +108,8 @@ app.*.map.json
 # FVM (caso utilize)
 # ===========================
 .fvm/
+# ===========================
+# Vercel local build
+# ===========================
+.vercel/
+.vercel_flutter/
