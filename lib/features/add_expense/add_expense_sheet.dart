@@ -1,3 +1,5 @@
+import 'package:fluxa/core/brands/expense_brand_signal.dart';
+import 'package:fluxa/core/theme/colors.dart';
 import 'package:fluxa/core/theme/spacing.dart';
 import 'package:fluxa/models/expense_draft.dart';
 import 'package:fluxa/shared/widgets/app_bottom_sheet.dart';
@@ -12,17 +14,26 @@ class AddExpenseSheet extends StatefulWidget {
     required this.draft,
     required this.categories,
     required this.sources,
+    required this.onCreateCategory,
+    this.brandSignal,
+    this.detectedTitle,
   });
 
   final ExpenseDraft draft;
   final List<String> categories;
   final List<String> sources;
+  final Future<String?> Function() onCreateCategory;
+  final ExpenseBrandSignal? brandSignal;
+  final String? detectedTitle;
 
   static Future<ExpenseDraft?> show(
     BuildContext context, {
     required ExpenseDraft draft,
     required List<String> categories,
     required List<String> sources,
+    required Future<String?> Function() onCreateCategory,
+    ExpenseBrandSignal? brandSignal,
+    String? detectedTitle,
   }) {
     return AppBottomSheet.show<ExpenseDraft>(
       context: context,
@@ -30,6 +41,9 @@ class AddExpenseSheet extends StatefulWidget {
         draft: draft,
         categories: categories,
         sources: sources,
+        onCreateCategory: onCreateCategory,
+        brandSignal: brandSignal,
+        detectedTitle: detectedTitle,
       ),
     );
   }
@@ -39,8 +53,10 @@ class AddExpenseSheet extends StatefulWidget {
 }
 
 class _AddExpenseSheetState extends State<AddExpenseSheet> {
+  static const _newCategoryValue = '__new_category__';
   late final TextEditingController _amountController;
   late final TextEditingController _descriptionController;
+  late List<String> _categories;
   late String _selectedCategory;
   late String _selectedSource;
 
@@ -51,9 +67,10 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
       text: widget.draft.amount > 0 ? widget.draft.amount.toStringAsFixed(2) : '',
     );
     _descriptionController = TextEditingController(text: widget.draft.description);
-    _selectedCategory = widget.categories.contains(widget.draft.category)
+    _categories = List<String>.from(widget.categories);
+    _selectedCategory = _categories.contains(widget.draft.category)
         ? widget.draft.category
-        : widget.categories.first;
+        : _categories.first;
     _selectedSource = widget.sources.contains(widget.draft.source)
         ? widget.draft.source
         : widget.sources.first;
@@ -72,6 +89,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
 
     return SafeArea(
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
         child: AppCard(
           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -83,6 +101,15 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                 'Adicionar gasto',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
+              if (widget.brandSignal != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _DetectedExpensePreview(
+                  brand: widget.brandSignal!,
+                  title: widget.detectedTitle ?? 'Compra detectada',
+                  amount: widget.draft.amount,
+                  source: widget.draft.source,
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg + 2),
               AppInput(
                 controller: _amountController,
@@ -99,10 +126,11 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: widget.categories
+                children: _categories
                     .map(
                       (category) => ChoiceChip(
                         label: Text(category),
+                        showCheckmark: false,
                         selected: _selectedCategory == category,
                         onSelected: (_) {
                           setState(() {
@@ -115,20 +143,40 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               ),
               const SizedBox(height: AppSpacing.sm + 2),
               DropdownButtonFormField<String>(
+                key: ValueKey('category-$_selectedCategory-${_categories.length}'),
                 initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Ou escolha na lista',
                 ),
-                items: widget.categories
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
+                items: [
+                  ..._categories.map(
+                    (category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    ),
+                  ),
+                  const DropdownMenuItem(
+                    value: _newCategoryValue,
+                    child: Text('+ Adicionar nova categoria'),
+                  ),
+                ],
+                onChanged: (value) async {
                   if (value == null) {
+                    return;
+                  }
+
+                  if (value == _newCategoryValue) {
+                    final createdCategory = await widget.onCreateCategory();
+                    if (!mounted || createdCategory == null) {
+                      return;
+                    }
+
+                    setState(() {
+                      if (!_categories.contains(createdCategory)) {
+                        _categories = [..._categories, createdCategory];
+                      }
+                      _selectedCategory = createdCategory;
+                    });
                     return;
                   }
 
@@ -211,6 +259,90 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
         category: _selectedCategory,
         source: _selectedSource,
         description: _descriptionController.text.trim(),
+      ),
+    );
+  }
+}
+
+class _DetectedExpensePreview extends StatelessWidget {
+  const _DetectedExpensePreview({
+    required this.brand,
+    required this.title,
+    required this.amount,
+    required this.source,
+  });
+
+  final ExpenseBrandSignal brand;
+  final String title;
+  final double amount;
+  final String source;
+
+  @override
+  Widget build(BuildContext context) {
+    final amountLabel = amount.toStringAsFixed(2).replaceAll('.', ',');
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: brand.color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: brand.color.withValues(alpha: 0.34)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: brand.color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: brand.color.withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(
+              brand.icon,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  brand.label,
+                  style: textTheme.labelLarge?.copyWith(
+                    color: brand.color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$source • R\$ $amountLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

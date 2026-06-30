@@ -5,7 +5,7 @@ part 'app_database.g.dart';
 
 class AppPreferencesTable extends Table {
   IntColumn get id => integer()();
-  TextColumn get displayName => text().withDefault(const Constant('Nik'))();
+  TextColumn get displayName => text().withDefault(const Constant(''))();
   TextColumn get appearance => text().withDefault(const Constant('calm'))();
   BoolColumn get completedWelcome =>
       boolean().withDefault(const Constant(false))();

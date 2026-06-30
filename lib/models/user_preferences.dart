@@ -1,5 +1,5 @@
 enum AppAppearance {
-  calm('Calmo'),
+  calm('Padrão'),
   light('Claro'),
   dark('Escuro');
 

@@ -33,6 +33,15 @@
                     android:host="login-callback" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".FluxaNotificationListenerService"
+            android:exported="false"
+            android:label="Fluxa"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -1,9 +1,7 @@
 import 'package:fluxa/core/theme/radius.dart';
-import 'package:fluxa/core/sync/sync_status.dart';
 import 'package:fluxa/core/extensions/date_extension.dart';
 import 'package:fluxa/core/extensions/money_extension.dart';
 import 'package:fluxa/core/theme/spacing.dart';
-import 'package:fluxa/features/auth/email_auth_sheet.dart';
 import 'package:fluxa/models/account.dart';
 import 'package:fluxa/models/budget.dart';
 import 'package:fluxa/models/calendar_event.dart';
@@ -18,14 +16,12 @@ import 'package:fluxa/shared/widgets/bank_card_widget.dart';
 import 'package:fluxa/shared/widgets/empty_state.dart';
 import 'package:fluxa/shared/widgets/section_heading.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CardsPage extends StatefulWidget {
   const CardsPage({
     super.key,
     required this.accounts,
     required this.cards,
-    required this.categories,
     required this.goals,
     required this.budgets,
     required this.subscriptions,
@@ -34,8 +30,6 @@ class CardsPage extends StatefulWidget {
     required this.onDeleteAccount,
     required this.onSaveCard,
     required this.onDeleteCard,
-    required this.onSaveCategory,
-    required this.onDeleteCategory,
     required this.onSaveGoal,
     required this.onDeleteGoal,
     required this.onSaveBudget,
@@ -44,19 +38,11 @@ class CardsPage extends StatefulWidget {
     required this.onDeleteSubscription,
     required this.onSaveCalendarEvent,
     required this.onDeleteCalendarEvent,
-    required this.onExportData,
-    required this.onImportData,
-    required this.currentSession,
-    required this.onSignInWithGoogle,
-    required this.onSignOut,
-    required this.onEmailAuthRequested,
-    required this.syncStatus,
-    required this.onSyncNow,
+    this.headerAction,
   });
 
   final List<Account> accounts;
   final List<PaymentCard> cards;
-  final List<String> categories;
   final List<Goal> goals;
   final List<Budget> budgets;
   final List<SubscriptionModel> subscriptions;
@@ -65,8 +51,6 @@ class CardsPage extends StatefulWidget {
   final Future<void> Function(String accountId) onDeleteAccount;
   final Future<void> Function(PaymentCard card) onSaveCard;
   final Future<void> Function(String cardId) onDeleteCard;
-  final Future<void> Function(String category) onSaveCategory;
-  final Future<void> Function(String category) onDeleteCategory;
   final Future<void> Function(Goal goal) onSaveGoal;
   final Future<void> Function(String goalId) onDeleteGoal;
   final Future<void> Function(Budget budget) onSaveBudget;
@@ -75,25 +59,18 @@ class CardsPage extends StatefulWidget {
   final Future<void> Function(String subscriptionId) onDeleteSubscription;
   final Future<void> Function(CalendarEventModel event) onSaveCalendarEvent;
   final Future<void> Function(String eventId) onDeleteCalendarEvent;
-  final Future<String> Function() onExportData;
-  final Future<void> Function(String rawData) onImportData;
-  final Session? currentSession;
-  final Future<void> Function() onSignInWithGoogle;
-  final Future<void> Function() onSignOut;
-  final Future<void> Function(EmailAuthResult result) onEmailAuthRequested;
-  final SyncStatus syncStatus;
-  final Future<void> Function() onSyncNow;
+  final Widget? headerAction;
 
   @override
   State<CardsPage> createState() => _CardsPageState();
 }
 
 enum _PlanningSection {
+  structure('Cartões', Icons.credit_card_rounded),
   budgets('Orçamento', Icons.pie_chart_outline_rounded),
-  goals('Metas', Icons.flag_outlined),
-  calendar('Calendário', Icons.event_note_rounded),
   subscriptions('Assinaturas', Icons.repeat_rounded),
-  structure('Cartões', Icons.credit_card_rounded);
+  calendar('Calendário', Icons.event_note_rounded),
+  goals('Metas', Icons.flag_outlined);
 
   const _PlanningSection(this.label, this.icon);
 
@@ -101,55 +78,53 @@ enum _PlanningSection {
   final IconData icon;
 }
 
+String _normalizeEventType(String rawType) {
+  return switch (rawType) {
+    'subscription_charge' || 'card_due' || 'due' || 'vencimento' => 'vencimento',
+    'reminder' || 'lembrete' => 'lembrete',
+    _ => 'evento',
+  };
+}
+
+({int backgroundColor, int accentColor}) _resolveBankPalette(String bankName) {
+  final normalized = bankName.trim().toLowerCase();
+
+  if (normalized.contains('nubank') || normalized.contains('nu ')) {
+    return (backgroundColor: 0xFF7C3AED, accentColor: 0xFFC4B5FD);
+  }
+  if (normalized.contains('santander')) {
+    return (backgroundColor: 0xFFDC2626, accentColor: 0xFFFDA4AF);
+  }
+  if (normalized.contains('ita') || normalized.contains('itau')) {
+    return (backgroundColor: 0xFFF97316, accentColor: 0xFF60A5FA);
+  }
+  if (normalized.contains('inter')) {
+    return (backgroundColor: 0xFFF97316, accentColor: 0xFFFED7AA);
+  }
+  if (normalized.contains('c6')) {
+    return (backgroundColor: 0xFF0F172A, accentColor: 0xFF94A3B8);
+  }
+  if (normalized.contains('bradesco')) {
+    return (backgroundColor: 0xFFBE123C, accentColor: 0xFFF9A8D4);
+  }
+
+  return (backgroundColor: 0xFF111827, accentColor: 0xFF94A3B8);
+}
+
 class _CardsPageState extends State<CardsPage> {
-  _PlanningSection _section = _PlanningSection.budgets;
+  _PlanningSection _section = _PlanningSection.structure;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: SectionHeading(
-                eyebrow: 'Planejamento',
-                title: 'Planejamento',
-              ),
-            ),
-            if (widget.currentSession == null)
-              IconButton(
-                tooltip: 'Entrar',
-                onPressed: _openAccountAccess,
-                icon: const Icon(Icons.person_outline_rounded),
-              )
-            else
-              PopupMenuButton<_AccountAction>(
-                tooltip: 'Conta',
-                onSelected: (action) async {
-                  if (action == _AccountAction.refresh) {
-                    await widget.onSyncNow();
-                    return;
-                  }
-                  await widget.onSignOut();
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: _AccountAction.refresh,
-                    child: Text('Atualizar dados'),
-                  ),
-                  PopupMenuItem(
-                    value: _AccountAction.signOut,
-                    child: Text('Sair da conta'),
-                  ),
-                ],
-                icon: const Icon(Icons.person_rounded),
-              ),
-          ],
+        SectionHeading(
+          eyebrow: 'Planejamento',
+          title: 'Planejamento',
+          trailing: widget.headerAction,
         ),
         const SizedBox(height: AppSpacing.lg),
-        _buildAccountCard(context),
-        const SizedBox(height: AppSpacing.lg - 2),
         SizedBox(
           height: 46,
           child: ListView(
@@ -161,6 +136,7 @@ class _CardsPageState extends State<CardsPage> {
                   child: ChoiceChip(
                     avatar: Icon(section.icon, size: 18),
                     label: Text(section.label),
+                    showCheckmark: false,
                     selected: _section == section,
                     onSelected: (_) {
                       setState(() {
@@ -178,60 +154,138 @@ class _CardsPageState extends State<CardsPage> {
     );
   }
 
-  Widget _buildAccountCard(BuildContext context) {
-    if (widget.currentSession == null) {
-      return AppCard(
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text('Entre na sua conta para carregar seus dados em outros aparelhos.'),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            AppButton(
-              label: 'Entrar',
-              onPressed: _openAccountAccess,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return AppCard(
-      child: Row(
+  Widget _buildPlanningHighlights(BuildContext context) {
+    return SizedBox(
+      height: 146,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.currentSession!.user.email ?? 'Conta conectada',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Seus dados ficam vinculados a esta conta.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
+          _PlanningPill(
+            label: 'Contas',
+            value: widget.accounts.length.toString(),
+            caption: widget.accounts.isEmpty ? 'Cadastrar' : 'ativas',
           ),
-          TextButton(
-            onPressed: widget.onSignOut,
-            child: const Text('Sair'),
+          _PlanningPill(
+            label: 'Cartões',
+            value: widget.cards.length.toString(),
+            caption: widget.cards.isEmpty ? 'Cadastrar' : 'salvos',
+          ),
+          _PlanningPill(
+            label: 'Orçamentos',
+            value: widget.budgets.length.toString(),
+            caption: widget.budgets.isEmpty ? 'Criar' : 'ativos',
+          ),
+          _PlanningPill(
+            label: 'Recorrências',
+            value: widget.subscriptions.length.toString(),
+            caption: widget.subscriptions.isEmpty ? 'Criar' : 'ativas',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActiveSection(BuildContext context) {
-    return switch (_section) {
-      _PlanningSection.budgets => _buildBudgetsSection(context),
-      _PlanningSection.goals => _buildGoalsSection(context),
-      _PlanningSection.calendar => _buildCalendarSection(context),
-      _PlanningSection.subscriptions => _buildSubscriptionsSection(context),
-      _PlanningSection.structure => _buildStructureSection(context),
+  String _billingCycleLabel(String billingCycle) {
+    return switch (billingCycle) {
+      'yearly' => 'Anual',
+      _ => 'Mensal',
     };
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+    );
+  }
+
+  Future<void> _openBudgetForm(BuildContext context, {Budget? initialBudget}) async {
+    final budget = await _BudgetFormSheet.show(
+      context,
+      initialBudget: initialBudget,
+    );
+    if (budget == null) {
+      return;
+    }
+    await widget.onSaveBudget(budget);
+  }
+
+  Future<void> _openGoalForm(BuildContext context, {Goal? initialGoal}) async {
+    final goal = await _GoalFormSheet.show(
+      context,
+      initialGoal: initialGoal,
+    );
+    if (goal == null) {
+      return;
+    }
+    await widget.onSaveGoal(goal);
+  }
+
+  Future<void> _openCalendarEventForm(
+    BuildContext context, {
+    CalendarEventModel? initialEvent,
+  }) async {
+    final event = await _CalendarEventFormSheet.show(
+      context,
+      initialEvent: initialEvent,
+    );
+    if (event == null) {
+      return;
+    }
+    await widget.onSaveCalendarEvent(event);
+  }
+
+  Future<void> _openSubscriptionForm(
+    BuildContext context, {
+    SubscriptionModel? initialSubscription,
+  }) async {
+    final subscription = await _SubscriptionFormSheet.show(
+      context,
+      initialSubscription: initialSubscription,
+    );
+    if (subscription == null) {
+      return;
+    }
+    await widget.onSaveSubscription(subscription);
+  }
+
+  Future<void> _openAccountForm(BuildContext context, {Account? initialAccount}) async {
+    final account = await _AccountFormSheet.show(
+      context,
+      initialAccount: initialAccount,
+    );
+    if (account == null) {
+      return;
+    }
+    await widget.onSaveAccount(account);
+  }
+
+  Future<void> _openCardForm(BuildContext context, {PaymentCard? initialCard}) async {
+    final card = await _CardFormSheet.show(
+      context,
+      initialCard: initialCard,
+    );
+    if (card == null) {
+      return;
+    }
+    await widget.onSaveCard(card);
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onPressed,
+    bool secondary = false,
+  }) {
+    return Expanded(
+      child: AppButton(
+        label: label,
+        variant: secondary ? AppButtonVariant.secondary : AppButtonVariant.primary,
+        onPressed: onPressed,
+      ),
+    );
   }
 
   Widget _buildBudgetsSection(BuildContext context) {
@@ -241,22 +295,9 @@ class _CardsPageState extends State<CardsPage> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Orçamento mensal',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
+              Expanded(child: _buildSectionTitle(context, 'Orçamento mensal')),
               TextButton(
-                onPressed: () async {
-                  final budget = await _BudgetFormSheet.show(context);
-                  if (budget == null) {
-                    return;
-                  }
-                  await widget.onSaveBudget(budget);
-                },
+                onPressed: () => _openBudgetForm(context),
                 child: const Text('Novo'),
               ),
             ],
@@ -276,16 +317,7 @@ class _CardsPageState extends State<CardsPage> {
                       '${budget.category} • ${budget.usedAmount.toMoney()} / ${budget.limitAmount.toMoney()}',
                   subtitle:
                       'Restante ${budget.remainingAmount.toMoney()} • alerta ${(budget.alertThresholdPercent).toStringAsFixed(0)}%',
-                  onEdit: () async {
-                    final updated = await _BudgetFormSheet.show(
-                      context,
-                      initialBudget: budget,
-                    );
-                    if (updated == null) {
-                      return;
-                    }
-                    await widget.onSaveBudget(updated);
-                  },
+                  onEdit: () => _openBudgetForm(context, initialBudget: budget),
                   onDelete: () => widget.onDeleteBudget(budget.id),
                 ),
               ),
@@ -295,6 +327,16 @@ class _CardsPageState extends State<CardsPage> {
     );
   }
 
+  Widget _buildActiveSection(BuildContext context) {
+    return switch (_section) {
+      _PlanningSection.budgets => _buildBudgetsSection(context),
+      _PlanningSection.goals => _buildGoalsSection(context),
+      _PlanningSection.calendar => _buildCalendarSection(context),
+      _PlanningSection.subscriptions => _buildSubscriptionsSection(context),
+      _PlanningSection.structure => _buildStructureSection(context),
+    };
+  }
+
   Widget _buildGoalsSection(BuildContext context) {
     return AppCard(
       child: Column(
@@ -302,22 +344,9 @@ class _CardsPageState extends State<CardsPage> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Metas',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
+              Expanded(child: _buildSectionTitle(context, 'Metas')),
               TextButton(
-                onPressed: () async {
-                  final goal = await _GoalFormSheet.show(context);
-                  if (goal == null) {
-                    return;
-                  }
-                  await widget.onSaveGoal(goal);
-                },
+                onPressed: () => _openGoalForm(context),
                 child: const Text('Nova'),
               ),
             ],
@@ -337,16 +366,7 @@ class _CardsPageState extends State<CardsPage> {
                       '${goal.name} • ${goal.currentAmount.toMoney()} / ${goal.targetAmount.toMoney()}',
                   subtitle:
                       'Progresso ${(goal.progress * 100).toStringAsFixed(0)}% • prazo ${goal.estimatedLabel}',
-                  onEdit: () async {
-                    final updated = await _GoalFormSheet.show(
-                      context,
-                      initialGoal: goal,
-                    );
-                    if (updated == null) {
-                      return;
-                    }
-                    await widget.onSaveGoal(updated);
-                  },
+                  onEdit: () => _openGoalForm(context, initialGoal: goal),
                   onDelete: () => widget.onDeleteGoal(goal.id),
                 ),
               ),
@@ -363,22 +383,9 @@ class _CardsPageState extends State<CardsPage> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Calendário financeiro',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
+              Expanded(child: _buildSectionTitle(context, 'Calendário financeiro')),
               TextButton(
-                onPressed: () async {
-                  final event = await _CalendarEventFormSheet.show(context);
-                  if (event == null) {
-                    return;
-                  }
-                  await widget.onSaveCalendarEvent(event);
-                },
+                onPressed: () => _openCalendarEventForm(context),
                 child: const Text('Novo'),
               ),
             ],
@@ -398,16 +405,7 @@ class _CardsPageState extends State<CardsPage> {
                   subtitle: event.amount == null
                       ? event.description
                       : '${event.description} • ${event.amount!.toMoney()}',
-                  onEdit: () async {
-                    final updated = await _CalendarEventFormSheet.show(
-                      context,
-                      initialEvent: event,
-                    );
-                    if (updated == null) {
-                      return;
-                    }
-                    await widget.onSaveCalendarEvent(updated);
-                  },
+                  onEdit: () => _openCalendarEventForm(context, initialEvent: event),
                   onDelete: () => widget.onDeleteCalendarEvent(event.id),
                 ),
               ),
@@ -424,22 +422,9 @@ class _CardsPageState extends State<CardsPage> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Assinaturas',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
+              Expanded(child: _buildSectionTitle(context, 'Assinaturas')),
               TextButton(
-                onPressed: () async {
-                  final subscription = await _SubscriptionFormSheet.show(context);
-                  if (subscription == null) {
-                    return;
-                  }
-                  await widget.onSaveSubscription(subscription);
-                },
+                onPressed: () => _openSubscriptionForm(context),
                 child: const Text('Nova'),
               ),
             ],
@@ -457,17 +442,8 @@ class _CardsPageState extends State<CardsPage> {
                 child: _ManageRow(
                   title: '${subscription.name} • ${subscription.amount.toMoney()}',
                   subtitle:
-                      'Ciclo ${subscription.billingCycle} • próxima cobrança ${subscription.nextChargeDate.toShortPtBr()}',
-                  onEdit: () async {
-                    final updated = await _SubscriptionFormSheet.show(
-                      context,
-                      initialSubscription: subscription,
-                    );
-                    if (updated == null) {
-                      return;
-                    }
-                    await widget.onSaveSubscription(updated);
-                  },
+                      '${_billingCycleLabel(subscription.billingCycle)} • próxima cobrança ${subscription.nextChargeDate.toShortPtBr()}',
+                  onEdit: () => _openSubscriptionForm(context, initialSubscription: subscription),
                   onDelete: () => widget.onDeleteSubscription(subscription.id),
                 ),
               ),
@@ -483,33 +459,21 @@ class _CardsPageState extends State<CardsPage> {
 
     return Column(
       children: [
+        _buildPlanningHighlights(context),
+        const SizedBox(height: AppSpacing.lg),
         Row(
           children: [
-            Expanded(
-              child: AppButton(
-                label: 'Nova conta',
-                onPressed: () async {
-                  final account = await _AccountFormSheet.show(context);
-                  if (account == null) {
-                    return;
-                  }
-                  await widget.onSaveAccount(account);
-                },
-              ),
+            _buildActionButton(
+              context,
+              label: 'Nova conta',
+              onPressed: () => _openAccountForm(context),
             ),
             const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppButton(
-                label: 'Novo cartão',
-                variant: AppButtonVariant.secondary,
-                onPressed: () async {
-                  final card = await _CardFormSheet.show(context);
-                  if (card == null) {
-                    return;
-                  }
-                  await widget.onSaveCard(card);
-                },
-              ),
+            _buildActionButton(
+              context,
+              label: 'Novo cartão',
+              secondary: true,
+              onPressed: () => _openCardForm(context),
             ),
           ],
         ),
@@ -538,12 +502,7 @@ class _CardsPageState extends State<CardsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Cartões',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
+              _buildSectionTitle(context, 'Cartões'),
               const SizedBox(height: 12),
               if (widget.cards.isEmpty)
                 const EmptyState(
@@ -558,16 +517,7 @@ class _CardsPageState extends State<CardsPage> {
                       title: '${card.bankName} • ${card.maskedNumber}',
                       subtitle:
                           'Disponível ${card.availableAmount.toMoney()} • Fatura ${card.currentInvoice.toMoney()}',
-                      onEdit: () async {
-                        final updated = await _CardFormSheet.show(
-                          context,
-                          initialCard: card,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await widget.onSaveCard(updated);
-                      },
+                      onEdit: () => _openCardForm(context, initialCard: card),
                       onDelete: () => widget.onDeleteCard(card.id),
                     ),
                   ),
@@ -580,12 +530,7 @@ class _CardsPageState extends State<CardsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Contas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
+              _buildSectionTitle(context, 'Contas'),
               const SizedBox(height: 12),
               if (widget.accounts.isEmpty)
                 const EmptyState(
@@ -599,16 +544,7 @@ class _CardsPageState extends State<CardsPage> {
                     child: _ManageRow(
                       title: '${account.name} • ${account.type}',
                       subtitle: 'Saldo ${account.balance.toMoney()}',
-                      onEdit: () async {
-                        final updated = await _AccountFormSheet.show(
-                          context,
-                          initialAccount: account,
-                        );
-                        if (updated == null) {
-                          return;
-                        }
-                        await widget.onSaveAccount(updated);
-                      },
+                      onEdit: () => _openAccountForm(context, initialAccount: account),
                       onDelete: () => widget.onDeleteAccount(account.id),
                     ),
                   ),
@@ -616,99 +552,48 @@ class _CardsPageState extends State<CardsPage> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg - 2),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('Categorias'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final category = await _CategoryFormSheet.show(context);
-                      if (category == null) {
-                        return;
-                      }
-                      await widget.onSaveCategory(category);
-                    },
-                    child: const Text('Nova'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: widget.categories
-                    .map(
-                      (category) => InputChip(
-                        label: Text(category),
-                        onDeleted: () => widget.onDeleteCategory(category),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
 
-  Future<void> _openAccountAccess() async {
-    final action = await showModalBottomSheet<_SignInAction>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(12),
-        child: AppCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.account_circle_outlined),
-                title: const Text('Entrar com Google'),
-                onTap: () => Navigator.of(context).pop(_SignInAction.google),
-              ),
-              ListTile(
-                leading: const Icon(Icons.alternate_email_rounded),
-                title: const Text('Entrar com e-mail'),
-                onTap: () => Navigator.of(context).pop(_SignInAction.email),
-              ),
-            ],
-          ),
+}
+
+class _PlanningPill extends StatelessWidget {
+  const _PlanningPill({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  final String label;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Container(
+        width: 152,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 10),
+            Text(value, style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 4),
+            Text(caption, style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
       ),
     );
-
-    if (action == null) {
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
-
-    if (action == _SignInAction.google) {
-      await widget.onSignInWithGoogle();
-      return;
-    }
-
-    final result = await EmailAuthSheet.show(context);
-    if (!mounted) {
-      return;
-    }
-    if (result == null) {
-      return;
-    }
-    await widget.onEmailAuthRequested(result);
   }
 }
-
-enum _AccountAction { refresh, signOut }
-enum _SignInAction { google, email }
 
 class _ManageRow extends StatelessWidget {
   const _ManageRow({
@@ -725,6 +610,7 @@ class _ManageRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.12);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -732,6 +618,7 @@ class _ManageRow extends StatelessWidget {
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
@@ -743,18 +630,92 @@ class _ManageRow extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
+          const SizedBox(width: 12),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: buttonColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.edit_outlined),
+            ),
           ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline),
+          const SizedBox(width: 10),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onDelete,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _SheetScaffold extends StatelessWidget {
+  const _SheetScaffold({
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return SafeArea(
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
+        child: AppCard(child: child),
+      ),
+    );
+  }
+}
+
+Future<DateTime?> _pickDate(
+  BuildContext context, {
+  DateTime? initialDate,
+}) {
+  final now = DateTime.now();
+  return showDatePicker(
+    context: context,
+    initialDate: initialDate ?? now,
+    firstDate: DateTime(now.year - 3),
+    lastDate: DateTime(now.year + 10),
+  );
+}
+
+String _formatDateLabel(DateTime date) {
+  final day = date.day.toString().padLeft(2, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  return '$day/$month';
+}
+
+DateTime _parseDateLabel(String rawValue) {
+  final now = DateTime.now();
+  final parts = rawValue.trim().split('/');
+  if (parts.length != 2) {
+    return now;
+  }
+
+  return DateTime(
+    now.year,
+    int.tryParse(parts[1]) ?? now.month,
+    int.tryParse(parts[0]) ?? now.day,
+  );
 }
 
 class _AccountFormSheet extends StatefulWidget {
@@ -802,11 +763,8 @@ class _AccountFormSheetState extends State<_AccountFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -851,7 +809,6 @@ class _AccountFormSheetState extends State<_AccountFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -902,22 +859,44 @@ class _CardFormSheetState extends State<_CardFormSheet> {
   late final TextEditingController _availableController;
   late final TextEditingController _closingController;
   late final TextEditingController _dueController;
+  late String _cardKind;
+
+  void _refreshPreview() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     final card = widget.initialCard;
     _bankController = TextEditingController(text: card?.bankName ?? '');
-    _nameController = TextEditingController(text: card?.name ?? 'Crédito');
+    _nameController = TextEditingController(text: card?.name ?? '');
     _limitController = TextEditingController(text: card?.limitAmount.toStringAsFixed(2) ?? '0.00');
     _invoiceController = TextEditingController(text: card?.currentInvoice.toStringAsFixed(2) ?? '0.00');
     _availableController = TextEditingController(text: card?.availableAmount.toStringAsFixed(2) ?? '0.00');
-    _closingController = TextEditingController(text: card?.closingLabel ?? '10 jul');
-    _dueController = TextEditingController(text: card?.dueLabel ?? '20 jul');
+    _closingController = TextEditingController(text: card?.closingLabel ?? '10/07');
+    _dueController = TextEditingController(text: card?.dueLabel ?? '20/07');
+    _cardKind = _resolveCardKind(card?.name);
+    _bankController.addListener(_refreshPreview);
+    _nameController.addListener(_refreshPreview);
+    _limitController.addListener(_refreshPreview);
+    _invoiceController.addListener(_refreshPreview);
+    _availableController.addListener(_refreshPreview);
+    _closingController.addListener(_refreshPreview);
+    _dueController.addListener(_refreshPreview);
   }
 
   @override
   void dispose() {
+    _bankController.removeListener(_refreshPreview);
+    _nameController.removeListener(_refreshPreview);
+    _limitController.removeListener(_refreshPreview);
+    _invoiceController.removeListener(_refreshPreview);
+    _availableController.removeListener(_refreshPreview);
+    _closingController.removeListener(_refreshPreview);
+    _dueController.removeListener(_refreshPreview);
     _bankController.dispose();
     _nameController.dispose();
     _limitController.dispose();
@@ -930,11 +909,26 @@ class _CardFormSheetState extends State<_CardFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    final previewPalette = _resolveBankPalette(_bankController.text);
+    final previewCard = PaymentCard(
+      id: widget.initialCard?.id ?? 'preview',
+      bankName: _bankController.text.trim().isEmpty ? 'Banco' : _bankController.text.trim(),
+      name: _resolvedCardName(),
+      maskedNumber: widget.initialCard?.maskedNumber ?? '•••• 0000',
+      limitAmount:
+          double.tryParse(_limitController.text.replaceAll(',', '.')) ?? 0,
+      availableAmount:
+          double.tryParse(_availableController.text.replaceAll(',', '.')) ?? 0,
+      currentInvoice:
+          double.tryParse(_invoiceController.text.replaceAll(',', '.')) ?? 0,
+      closingLabel: _closingController.text.trim(),
+      dueLabel: _dueController.text.trim(),
+      backgroundColor: previewPalette.backgroundColor,
+      accentColor: previewPalette.accentColor,
+    );
+
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -943,9 +937,37 @@ class _CardFormSheetState extends State<_CardFormSheet> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: AppSpacing.lg),
-            AppInput(controller: _bankController, label: 'Banco', hint: 'Nubank'),
+            BankCardWidget(card: previewCard, compact: true),
+            const SizedBox(height: AppSpacing.lg),
+            AppInput(
+              controller: _bankController,
+              label: 'Banco',
+              hint: 'Nubank',
+            ),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(controller: _nameController, label: 'Nome do cartão', hint: 'Crédito'),
+            DropdownButtonFormField<String>(
+              key: ValueKey('card-kind-$_cardKind'),
+              initialValue: _cardKind,
+              decoration: const InputDecoration(labelText: 'Tipo do cartão'),
+              items: const [
+                DropdownMenuItem(value: 'credito', child: Text('Crédito')),
+                DropdownMenuItem(value: 'debito', child: Text('Débito')),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _cardKind = value;
+                });
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg - 2),
+            AppInput(
+              controller: _nameController,
+              label: 'Apelido do cartão',
+              hint: 'Opcional, ex.: final 2211',
+            ),
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(controller: _limitController, label: 'Limite total', hint: '4200.00'),
             const SizedBox(height: AppSpacing.lg - 2),
@@ -953,9 +975,41 @@ class _CardFormSheetState extends State<_CardFormSheet> {
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(controller: _invoiceController, label: 'Fatura atual', hint: '2340.00'),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(controller: _closingController, label: 'Fechamento', hint: '10 jul'),
+            AppInput(
+              controller: _closingController,
+              label: 'Fechamento',
+              hint: '10/07',
+              readOnly: true,
+              suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+              onTap: () async {
+                final selected = await _pickDate(
+                  context,
+                  initialDate: _parseDateLabel(_closingController.text),
+                );
+                if (!mounted || selected == null) {
+                  return;
+                }
+                _closingController.text = _formatDateLabel(selected);
+              },
+            ),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(controller: _dueController, label: 'Vencimento', hint: '20 jul'),
+            AppInput(
+              controller: _dueController,
+              label: 'Vencimento',
+              hint: '20/07',
+              readOnly: true,
+              suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+              onTap: () async {
+                final selected = await _pickDate(
+                  context,
+                  initialDate: _parseDateLabel(_dueController.text),
+                );
+                if (!mounted || selected == null) {
+                  return;
+                }
+                _dueController.text = _formatDateLabel(selected);
+              },
+            ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
@@ -966,7 +1020,6 @@ class _CardFormSheetState extends State<_CardFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -986,83 +1039,31 @@ class _CardFormSheetState extends State<_CardFormSheet> {
         id: widget.initialCard?.id ??
             DateTime.now().microsecondsSinceEpoch.toString(),
         bankName: _bankController.text.trim(),
-        name: _nameController.text.trim().isEmpty
-            ? 'Crédito'
-            : _nameController.text.trim(),
+        name: _resolvedCardName(),
         maskedNumber: widget.initialCard?.maskedNumber ?? '•••• ${(DateTime.now().millisecond % 9000 + 1000)}',
         limitAmount: limit,
         availableAmount: available,
         currentInvoice: invoice,
         closingLabel: _closingController.text.trim(),
         dueLabel: _dueController.text.trim(),
-        backgroundColor: widget.initialCard?.backgroundColor ?? 0xFF111827,
-        accentColor: widget.initialCard?.accentColor ?? 0xFF94A3B8,
+        backgroundColor: _resolveBankPalette(_bankController.text).backgroundColor,
+        accentColor: _resolveBankPalette(_bankController.text).accentColor,
       ),
     );
   }
-}
 
-class _CategoryFormSheet extends StatefulWidget {
-  const _CategoryFormSheet();
-
-  static Future<String?> show(BuildContext context) {
-    return AppBottomSheet.show<String>(
-      context: context,
-      child: const _CategoryFormSheet(),
-    );
+  String _resolveCardKind(String? cardName) {
+    final normalized = (cardName ?? '').trim().toLowerCase();
+    if (normalized == 'débito' || normalized == 'debito') {
+      return 'debito';
+    }
+    return 'credito';
   }
 
-  @override
-  State<_CategoryFormSheet> createState() => _CategoryFormSheetState();
-}
-
-class _CategoryFormSheetState extends State<_CategoryFormSheet> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Nova categoria',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppInput(
-              controller: _controller,
-              label: 'Nome',
-              hint: 'Ex.: Educação',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                label: 'Salvar categoria',
-                onPressed: () {
-                  final value = _controller.text.trim();
-                  if (value.isEmpty) {
-                    return;
-                  }
-                  Navigator.of(context).pop(value);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _resolvedCardName() {
+    final alias = _nameController.text.trim();
+    final kindLabel = _cardKind == 'debito' ? 'Débito' : 'Crédito';
+    return alias.isEmpty ? kindLabel : '$kindLabel • $alias';
   }
 }
 
@@ -1119,11 +1120,8 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1165,7 +1163,6 @@ class _GoalFormSheetState extends State<_GoalFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1246,11 +1243,8 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1273,7 +1267,6 @@ class _BudgetFormSheetState extends State<_BudgetFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1327,8 +1320,8 @@ class _SubscriptionFormSheet extends StatefulWidget {
 class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _amountController;
-  late final TextEditingController _billingController;
   late final TextEditingController _nextChargeController;
+  late String _billingCycle;
 
   @override
   void initState() {
@@ -1338,9 +1331,7 @@ class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
     _amountController = TextEditingController(
       text: widget.initialSubscription?.amount.toStringAsFixed(2) ?? '0.00',
     );
-    _billingController = TextEditingController(
-      text: widget.initialSubscription?.billingCycle ?? 'monthly',
-    );
+    _billingCycle = widget.initialSubscription?.billingCycle ?? 'monthly';
     _nextChargeController = TextEditingController(
       text: widget.initialSubscription == null
           ? '05/07'
@@ -1352,18 +1343,14 @@ class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
-    _billingController.dispose();
     _nextChargeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1378,16 +1365,39 @@ class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(controller: _amountController, label: 'Valor', hint: '21.90'),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(
-              controller: _billingController,
-              label: 'Ciclo',
-              hint: 'monthly ou yearly',
+            DropdownButtonFormField<String>(
+              initialValue: _billingCycle,
+              decoration: const InputDecoration(labelText: 'Ciclo'),
+              items: const [
+                DropdownMenuItem(value: 'monthly', child: Text('Mensal')),
+                DropdownMenuItem(value: 'yearly', child: Text('Anual')),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _billingCycle = value;
+                });
+              },
             ),
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(
               controller: _nextChargeController,
               label: 'Próxima cobrança',
               hint: '05/07',
+              readOnly: true,
+              suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+              onTap: () async {
+                final selected = await _pickDate(
+                  context,
+                  initialDate: _parseDateLabel(_nextChargeController.text),
+                );
+                if (!mounted || selected == null) {
+                  return;
+                }
+                _nextChargeController.text = _formatDateLabel(selected);
+              },
             ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
@@ -1396,7 +1406,6 @@ class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1405,20 +1414,14 @@ class _SubscriptionFormSheetState extends State<_SubscriptionFormSheet> {
     if (_nameController.text.trim().isEmpty || amount == null) {
       return;
     }
-    final now = DateTime.now();
-    final parts = _nextChargeController.text.trim().split('/');
-    final nextCharge = parts.length == 2
-        ? DateTime(now.year, int.tryParse(parts[1]) ?? now.month, int.tryParse(parts[0]) ?? now.day)
-        : now;
+    final nextCharge = _parseDateLabel(_nextChargeController.text);
     Navigator.of(context).pop(
       SubscriptionModel(
         id: widget.initialSubscription?.id ??
             DateTime.now().microsecondsSinceEpoch.toString(),
         name: _nameController.text.trim(),
         amount: amount,
-        billingCycle: _billingController.text.trim().isEmpty
-            ? 'monthly'
-            : _billingController.text.trim(),
+        billingCycle: _billingCycle,
         nextChargeDate: nextCharge,
         isActive: true,
         detectionSource: 'manual',
@@ -1450,18 +1453,17 @@ class _CalendarEventFormSheet extends StatefulWidget {
 
 class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
   late final TextEditingController _titleController;
-  late final TextEditingController _typeController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _amountController;
   late final TextEditingController _dateController;
+  late String _eventType;
 
   @override
   void initState() {
     super.initState();
     _titleController =
         TextEditingController(text: widget.initialEvent?.title ?? '');
-    _typeController =
-        TextEditingController(text: widget.initialEvent?.type ?? 'custom');
+    _eventType = _normalizeEventType(widget.initialEvent?.type ?? 'evento');
     _descriptionController = TextEditingController(
       text: widget.initialEvent?.description ?? '',
     );
@@ -1478,7 +1480,6 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
   @override
   void dispose() {
     _titleController.dispose();
-    _typeController.dispose();
     _descriptionController.dispose();
     _amountController.dispose();
     _dateController.dispose();
@@ -1487,11 +1488,8 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 12, 12, bottom + 12),
-      child: AppCard(
-        child: Column(
+    return _SheetScaffold(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1502,13 +1500,45 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
             const SizedBox(height: AppSpacing.lg),
             AppInput(controller: _titleController, label: 'Título', hint: 'Vencimento do cartão'),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(controller: _typeController, label: 'Tipo', hint: 'card_due'),
+            DropdownButtonFormField<String>(
+              initialValue: _eventType,
+              decoration: const InputDecoration(labelText: 'Tipo'),
+              items: const [
+                DropdownMenuItem(value: 'evento', child: Text('Evento')),
+                DropdownMenuItem(value: 'vencimento', child: Text('Vencimento')),
+                DropdownMenuItem(value: 'lembrete', child: Text('Lembrete')),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _eventType = value;
+                });
+              },
+            ),
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(controller: _descriptionController, label: 'Descrição', hint: 'Opcional'),
             const SizedBox(height: AppSpacing.lg - 2),
             AppInput(controller: _amountController, label: 'Valor', hint: '0.00'),
             const SizedBox(height: AppSpacing.lg - 2),
-            AppInput(controller: _dateController, label: 'Data', hint: '10/07'),
+            AppInput(
+              controller: _dateController,
+              label: 'Data',
+              hint: '10/07',
+              readOnly: true,
+              suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+              onTap: () async {
+                final selected = await _pickDate(
+                  context,
+                  initialDate: _parseDateLabel(_dateController.text),
+                );
+                if (!mounted || selected == null) {
+                  return;
+                }
+                _dateController.text = _formatDateLabel(selected);
+              },
+            ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
@@ -1516,7 +1546,6 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1524,19 +1553,13 @@ class _CalendarEventFormSheetState extends State<_CalendarEventFormSheet> {
     if (_titleController.text.trim().isEmpty) {
       return;
     }
-    final now = DateTime.now();
-    final parts = _dateController.text.trim().split('/');
-    final eventDate = parts.length == 2
-        ? DateTime(now.year, int.tryParse(parts[1]) ?? now.month, int.tryParse(parts[0]) ?? now.day)
-        : now;
+    final eventDate = _parseDateLabel(_dateController.text);
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     Navigator.of(context).pop(
       CalendarEventModel(
         id: widget.initialEvent?.id ??
             DateTime.now().microsecondsSinceEpoch.toString(),
-        type: _typeController.text.trim().isEmpty
-            ? 'custom'
-            : _typeController.text.trim(),
+        type: _eventType,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         eventDate: eventDate,

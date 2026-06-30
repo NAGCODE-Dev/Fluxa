@@ -80,6 +80,8 @@ lib/
 - Dart
 - Supabase
 - Material 3
+- Vercel
+- GitHub Releases
 
 ---
 
@@ -94,6 +96,62 @@ flutter pub get
 
 flutter run
 ```
+
+## 🌐 Distribuição pública
+
+O projeto agora inclui a base de distribuição pública em três partes:
+
+- `site/`: landing page estática para Vercel
+- `.github/workflows/release-android.yml`: workflow que gera o APK e publica a release
+- `.github/workflows/deploy-web.yml`: workflow que gera o build web
+- `vercel.json`: entrega a landing na raiz do deploy e o app web em `/app/`
+
+### Fluxo
+
+1. Publique código no GitHub.
+2. Gere o app web com `flutter build web` ou rode o workflow `Build Fluxa Web`.
+3. Rode o workflow `Release Android APK` manualmente ou use uma tag `vX.Y.Z`.
+4. O GitHub Actions gera `fluxa-vX.Y.Z.apk` e anexa na release.
+5. A landing do Vercel consulta automaticamente as releases e atualiza:
+
+- versão atual
+- changelog curto
+- botão de download
+- histórico de versões
+
+O botão de iPhone abre `Fluxa Web` em `/app/`.
+
+### Deploy da landing no Vercel
+
+No Vercel, importe este repositório sem framework preset especial.
+
+- Root Directory: `.`
+- Build Command: vazio
+- Output Directory: vazio
+
+O `vercel.json` já aponta `/` para `site/index.html`.
+
+Para a V1, o caminho mais simples é publicar o repositório com a pasta `build/web` já gerada no deploy.
+Depois, se quiser, dá para automatizar um deploy web dedicado no Vercel via CI.
+
+### Fluxa Web
+
+O app já compila para web e pode ser servido no mesmo projeto em `/app/`.
+
+- Android: continua baixando o APK via release.
+- iPhone: usa Safari + `Adicionar à Tela de Início`.
+- Build web: o workflow usa `flutter build web --base-href /app/`.
+- Landing: o botão `Usar no iPhone` já aponta para `/app/` em [site/app.js](/home/nikolasa/Downloads/FinanceHub/site/app.js:1).
+
+### Captura assistida por notificações
+
+No Android, o Fluxa pode gerar sugestões de gasto a partir de notificações de banco/cartão.
+
+- O usuário ativa manualmente em `Conta e preferências` > `Captura por notificações`.
+- O Android abre a tela de permissão de acesso a notificações.
+- O app procura notificações com valores em reais e cria uma sugestão editável.
+- Nada é registrado automaticamente: o usuário toca em `Registrar`, revisa o gasto e salva.
+- iPhone e Fluxa Web continuam com cadastro manual, porque o iOS não permite leitura livre de notificações de outros apps.
 
 ---
 

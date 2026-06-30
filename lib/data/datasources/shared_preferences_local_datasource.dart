@@ -47,7 +47,7 @@ class SharedPreferencesLocalDatasource implements LocalDatasource {
     await _ensureSeedData();
     final expense = TransactionModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      title: draft.category,
+      title: _titleFromDraft(draft),
       description: draft.description,
       amount: -draft.amount,
       type: TransactionType.expense,
@@ -598,6 +598,11 @@ class SharedPreferencesLocalDatasource implements LocalDatasource {
       _transactionsKey,
       jsonEncode(transactions.map((item) => item.toJson()).toList()),
     );
+  }
+
+  String _titleFromDraft(ExpenseDraft draft) {
+    final title = draft.description.split('•').first.trim();
+    return title.isEmpty ? draft.category : title;
   }
 
   Future<void> _writeAccounts(List<Account> accounts) {

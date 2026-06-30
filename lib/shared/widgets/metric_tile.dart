@@ -19,13 +19,15 @@ class MetricTile extends StatelessWidget {
         children: [
           Text(metric.label, style: textTheme.labelLarge),
           const SizedBox(height: 10),
-          Text(
-            metric.valueLabel,
-            style: textTheme.titleLarge,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Flexible(
+            child: Text(
+              metric.valueLabel,
+              style: textTheme.titleLarge,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const SizedBox(height: 6),
+          const Spacer(),
           Text(
             metric.caption,
             style: textTheme.bodyMedium,

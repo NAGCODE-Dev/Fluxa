@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluxa</title>
+    <meta
+      name="description"
+      content="Baixe o APK mais recente do Fluxa, acompanhe versões e use a versão web no iPhone."
+    />
+    <link rel="icon" href="/assets/brand/fluxa-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/site/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <div class="brand-lockup">
+            <img
+              class="brand-mark"
+              src="/assets/brand/fluxa-mark.svg"
+              alt="Símbolo Fluxa"
+            />
+            <div>
+              <p class="eyebrow">Fluxa V1</p>
+              <h1>Suas finanças. No fluxo certo.</h1>
+            </div>
+          </div>
+
+          <p class="hero-body">
+            Baixe agora o seu próximo melhor amigo financeiro.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#download" id="hero-download">
+              Baixar APK
+            </a>
+            <a class="btn btn-secondary" href="#iphone" id="hero-web">
+              Usar no iPhone
+            </a>
+          </div>
+
+          <div class="hero-meta">
+            <span class="meta-pill">Android por APK</span>
+            <span class="meta-pill">iPhone por navegador</span>
+            <span class="meta-pill">Versionamento automático</span>
+          </div>
+        </div>
+
+        <aside class="hero-panel surface">
+          <p class="panel-label">Última release</p>
+          <h2 id="latest-version">Carregando...</h2>
+          <p id="latest-date" class="muted">Buscando informações do GitHub</p>
+          <p id="latest-summary" class="panel-summary">
+            Assim que existir uma release publicada, o Fluxa mostra a versão
+            mais recente aqui.
+          </p>
+          <div class="panel-actions">
+            <a class="btn btn-primary btn-block disabled" id="latest-download" href="#">
+              APK indisponível
+            </a>
+          </div>
+        </aside>
+      </header>
+
+      <main>
+        <section class="section product-band">
+          <article class="surface product-card">
+            <div class="product-copy">
+              <p class="eyebrow">Produto</p>
+              <h2>Controle claro, rápido e com identidade própria.</h2>
+              <p>
+                Fluxa não tenta parecer banco nem planilha. Ele organiza saldo,
+                histórico e planejamento com uma linguagem visual mais limpa e
+                memorável.
+              </p>
+            </div>
+            <img
+              class="product-preview"
+              src="/assets/brand/fluxa-brand-board.png"
+              alt="Prancha visual da marca Fluxa"
+            />
+          </article>
+        </section>
+
+        <section class="section" id="download">
+          <div class="section-head">
+            <p class="eyebrow">Download</p>
+            <h2>Baixe a versão atual ou acompanhe o histórico.</h2>
+          </div>
+
+          <div class="download-grid">
+            <article class="surface release-card">
+              <p class="panel-label">Versão atual</p>
+              <h3 id="download-version">Sem release</h3>
+              <p id="download-notes" class="muted">
+                Publique sua primeira release para preencher este bloco.
+              </p>
+              <a class="btn btn-primary disabled" id="download-button" href="#">
+                Publicação pendente
+              </a>
+            </article>
+
+            <article class="surface release-card" id="iphone">
+              <p class="panel-label">iPhone</p>
+              <h3>Use no navegador</h3>
+              <p class="muted">
+                Para iPhone, o caminho mais viável agora é a experiência web.
+                Abra no Safari e adicione à tela inicial quando a versão web
+                estiver publicada.
+              </p>
+              <a class="btn btn-secondary disabled" id="web-button" href="#">
+                Fluxa Web em preparação
+              </a>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <p class="eyebrow">Histórico</p>
+            <h2>Versões publicadas</h2>
+            <p>
+              Cada release mostra versão, data, changelog curto e asset
+              disponível para download.
+            </p>
+          </div>
+
+          <div class="release-list" id="release-list">
+            <article class="surface release-row placeholder">
+              <div>
+                <strong>Nenhuma release encontrada ainda</strong>
+                <p class="muted">
+                  Depois do primeiro workflow, este histórico será preenchido
+                  automaticamente.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/site/app.js" defer></script>
+  </body>
+</html>

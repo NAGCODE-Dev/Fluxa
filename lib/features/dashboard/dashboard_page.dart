@@ -17,12 +17,14 @@ class DashboardPage extends StatelessWidget {
     required this.summary,
     required this.accounts,
     required this.cards,
+    this.headerAction,
   });
 
   final String displayName;
   final DashboardSummary summary;
   final List<Account> accounts;
   final List<PaymentCard> cards;
+  final Widget? headerAction;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class DashboardPage extends StatelessWidget {
         SectionHeading(
           eyebrow: 'Início',
           title: 'Olá, $name',
+          trailing: headerAction,
         ),
         const SizedBox(height: AppSpacing.xl),
         AppCard(

@@ -21,7 +21,7 @@ class $AppPreferencesTableTable extends AppPreferencesTable
       'display_name', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('Nik'));
+      defaultValue: const Constant(''));
   static const VerificationMeta _appearanceMeta =
       const VerificationMeta('appearance');
   @override

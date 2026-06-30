@@ -1,0 +1,86 @@
+name: Release Android APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão da release. Ex.: 1.0.0"
+        required: true
+      notes:
+        description: "Changelog curto para a release"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: meta
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="v${{ github.event.inputs.version }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "apk_name=fluxa-$TAG.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk "${{ steps.meta.outputs.apk_name }}"
+
+      - name: Create or update GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          NOTES: ${{ github.event.inputs.notes }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG já existe."
+          else
+            if [ -n "$NOTES" ]; then
+              gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes "$NOTES"
+            else
+              gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+            fi
+          fi
+
+      - name: Upload APK to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: gh release upload "$TAG" "${{ steps.meta.outputs.apk_name }}" --clobber

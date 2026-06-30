@@ -47,7 +47,7 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
   final AppDatabase _database;
 
   UserPreferences _preferences = const UserPreferences(
-    displayName: 'Nik',
+    displayName: '',
     appearance: AppAppearance.calm,
   );
   bool _completedWelcome = false;
@@ -72,7 +72,7 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
   Future<void> addExpense(ExpenseDraft draft) async {
     final expense = TransactionModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      title: draft.category,
+      title: _titleFromDraft(draft),
       description: draft.description,
       amount: -draft.amount,
       type: TransactionType.expense,
@@ -267,8 +267,12 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
 
   @override
   List<String> getExpenseSources() {
-    final accountSources = _accounts.map(
-      (account) => '${account.name} • Débito',
+    final accountSources = _accounts.expand(
+      (account) => [
+        '${account.name} • Débito',
+        '${account.name} • Pix',
+        '${account.name} • Débito automático',
+      ],
     );
     final cardSources = _cards.map(
       (card) => '${card.bankName} • Crédito',
@@ -364,9 +368,15 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
         ? List<String>.from(_defaultCategories)
         : categories;
     _goals = goals;
-    _budgets = budgets;
-    _subscriptions = subscriptions;
-    _calendarEvents = calendarEvents;
+    if (budgets.isNotEmpty) {
+      _budgets = budgets;
+    }
+    if (subscriptions.isNotEmpty) {
+      _subscriptions = subscriptions;
+    }
+    if (calendarEvents.isNotEmpty) {
+      _calendarEvents = calendarEvents;
+    }
     _transactions = transactions
       ..sort((left, right) => right.occuredAt.compareTo(left.occuredAt));
 
@@ -572,7 +582,7 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
               ..where((table) => table.id.equals(1)))
             .getSingleOrNull();
     _preferences = UserPreferences(
-      displayName: preferenceRow?.displayName ?? 'Nik',
+      displayName: _sanitizeDisplayName(preferenceRow?.displayName),
       appearance: AppAppearance.values.firstWhere(
         (value) => value.name == preferenceRow?.appearance,
         orElse: () => AppAppearance.calm,
@@ -705,7 +715,7 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
     await _database.into(_database.appPreferencesTable).insertOnConflictUpdate(
           const AppPreferencesTableCompanion(
             id: Value(1),
-            displayName: Value('Nik'),
+            displayName: Value(''),
             appearance: Value('calm'),
             completedWelcome: Value(false),
           ),
@@ -839,11 +849,19 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
     return _database.into(_database.appPreferencesTable).insertOnConflictUpdate(
           AppPreferencesTableCompanion.insert(
             id: const Value(1),
-            displayName: Value(_preferences.displayName),
+            displayName: Value(_sanitizeDisplayName(_preferences.displayName)),
             appearance: Value(_preferences.appearance.name),
             completedWelcome: Value(_completedWelcome),
           ),
         );
+  }
+
+  String _sanitizeDisplayName(String? rawValue) {
+    final value = (rawValue ?? '').trim();
+    if (value.toLowerCase() == 'nik') {
+      return '';
+    }
+    return value;
   }
 
   Future<void> _writeTransactions(List<TransactionModel> transactions) {
@@ -863,6 +881,11 @@ class DriftLocalDatasource implements LocalDatasource, RemoteSyncTarget {
           )
           .toList(),
     );
+  }
+
+  String _titleFromDraft(ExpenseDraft draft) {
+    final title = draft.description.split('•').first.trim();
+    return title.isEmpty ? draft.category : title;
   }
 
   Future<void> _persistSnapshot() async {

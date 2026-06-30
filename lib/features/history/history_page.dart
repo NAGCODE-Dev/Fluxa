@@ -1,5 +1,6 @@
 import 'package:fluxa/core/extensions/date_extension.dart';
 import 'package:fluxa/core/extensions/money_extension.dart';
+import 'package:fluxa/core/brands/expense_brand_signal.dart';
 import 'package:fluxa/core/theme/spacing.dart';
 import 'package:fluxa/models/subscription.dart';
 import 'package:fluxa/models/transaction.dart';
@@ -19,12 +20,14 @@ class HistoryPage extends StatefulWidget {
     required this.subscriptions,
     required this.onSaveTransaction,
     required this.onDeleteTransaction,
+    this.headerAction,
   });
 
   final List<TransactionModel> transactions;
   final List<SubscriptionModel> subscriptions;
   final Future<void> Function(TransactionModel transaction) onSaveTransaction;
   final Future<void> Function(String transactionId) onDeleteTransaction;
+  final Widget? headerAction;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -82,9 +85,10 @@ class _HistoryPageState extends State<HistoryPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
       children: [
-        const SectionHeading(
+        SectionHeading(
           eyebrow: 'Histórico',
-          title: 'Histórico',
+          title: 'Movimentações',
+          trailing: widget.headerAction,
         ),
         const SizedBox(height: AppSpacing.xl),
         if (upcomingSubscriptions.isNotEmpty) ...[
@@ -171,64 +175,33 @@ class _HistoryPageState extends State<HistoryPage> {
         else
           ...filteredTransactions.map((item) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: TransactionRow(
-                title: item.title,
-                subtitle:
-                    '${item.occuredAt.toShortPtBr()} • ${item.category} • ${item.sourceLabel}',
-                amount: item.amount,
-                trailing: PopupMenuButton<_TransactionAction>(
-                  icon: const Icon(Icons.more_horiz_rounded),
-                  onSelected: (action) async {
-                    if (action == _TransactionAction.edit) {
-                      final updated = await _TransactionFormSheet.show(
-                        context,
-                        initialTransaction: item,
-                      );
-                      if (updated == null) {
-                        return;
-                      }
-                      await widget.onSaveTransaction(updated);
-                      return;
-                    }
+              child: Builder(
+                builder: (context) {
+                  final brand = ExpenseBrandCatalog.resolve(
+                    text:
+                        '${item.title} ${item.description} ${item.category} ${item.sourceLabel}',
+                    appName: item.sourceLabel,
+                    packageName: '',
+                  );
+                  final hasBrand =
+                      brand.key != ExpenseBrandCatalog.genericBank.key ||
+                          item.sourceLabel.toLowerCase().contains('banco');
 
-                    final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Excluir movimentação'),
-                            content: Text(
-                              'Remover "${item.title}" do histórico e recalcular saldos locais?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('Cancelar'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('Excluir'),
-                              ),
-                            ],
-                          ),
-                        ) ??
-                        false;
-
-                    if (!confirmed) {
-                      return;
-                    }
-
-                    await widget.onDeleteTransaction(item.id);
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: _TransactionAction.edit,
-                      child: Text('Editar'),
+                  return TransactionRow(
+                    title: item.title,
+                    subtitle:
+                        '${item.occuredAt.toShortPtBr()} • ${item.category} • ${item.sourceLabel}',
+                    amount: item.amount,
+                    accentColor: hasBrand ? brand.color : null,
+                    accentIcon: hasBrand ? brand.icon : null,
+                    accentLabel: hasBrand ? brand.label : null,
+                    trailing: _TransactionActionsButton(
+                      transaction: item,
+                      onSaveTransaction: widget.onSaveTransaction,
+                      onDeleteTransaction: widget.onDeleteTransaction,
                     ),
-                    PopupMenuItem(
-                      value: _TransactionAction.delete,
-                      child: Text('Excluir'),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             )),
       ],
@@ -269,6 +242,137 @@ class _HistoryPageState extends State<HistoryPage> {
 }
 
 enum _TransactionAction { edit, delete }
+
+class _TransactionActionsButton extends StatelessWidget {
+  const _TransactionActionsButton({
+    required this.transaction,
+    required this.onSaveTransaction,
+    required this.onDeleteTransaction,
+  });
+
+  final TransactionModel transaction;
+  final Future<void> Function(TransactionModel transaction) onSaveTransaction;
+  final Future<void> Function(String transactionId) onDeleteTransaction;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () => _openActions(context),
+      icon: const Icon(Icons.more_horiz_rounded),
+    );
+  }
+
+  Future<void> _openActions(BuildContext context) async {
+    final action = await AppBottomSheet.show<_TransactionAction>(
+      context: context,
+      child: const Padding(
+        padding: EdgeInsets.all(12),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ActionTile(
+                action: _TransactionAction.edit,
+                icon: Icons.edit_rounded,
+                label: 'Editar movimentação',
+              ),
+              SizedBox(height: 10),
+              _ActionTile(
+                action: _TransactionAction.delete,
+                icon: Icons.delete_outline_rounded,
+                label: 'Excluir movimentação',
+                destructive: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (action == null || !context.mounted) {
+      return;
+    }
+
+    if (action == _TransactionAction.edit) {
+      final updated = await _TransactionFormSheet.show(
+        context,
+        initialTransaction: transaction,
+      );
+      if (updated == null) {
+        return;
+      }
+      await onSaveTransaction(updated);
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Excluir movimentação'),
+            content: Text(
+              'Remover "${transaction.title}" do histórico e recalcular saldos locais?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Excluir'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    await onDeleteTransaction(transaction.id);
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
+    required this.action,
+    required this.icon,
+    required this.label,
+    this.destructive = false,
+  });
+
+  final _TransactionAction action;
+  final IconData icon;
+  final String label;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? Theme.of(context).colorScheme.error : null;
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => Navigator.of(context).pop(action),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: color,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _TransactionFormSheet extends StatefulWidget {
   const _TransactionFormSheet({
